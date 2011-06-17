@@ -33,20 +33,20 @@ struct
   val init_vitality = 10000
 
   fun show_card CI = "I"
-    | show_card CZero = "Zero"
-    | show_card CSucc = "Succ"
-    | show_card CDbl = "Dbl"
-    | show_card CGet = "Get"
-    | show_card CPut = "Put"
+    | show_card CZero = "zero"
+    | show_card CSucc = "succ"
+    | show_card CDbl = "dbl"
+    | show_card CGet = "get"
+    | show_card CPut = "put"
     | show_card CS = "S"
     | show_card CK = "K"
-    | show_card CInc = "Inc"
-    | show_card CDec = "Dec"
-    | show_card CAttack = "Attack"
-    | show_card CHelp = "Help"
-    | show_card CCopy = "Copy"
-    | show_card CRevive = "Revive"
-    | show_card CZombie = "Zombie"
+    | show_card CInc = "inc"
+    | show_card CDec = "dec"
+    | show_card CAttack = "attack"
+    | show_card CHelp = "help"
+    | show_card CCopy = "copy"
+    | show_card CRevive = "revive"
+    | show_card CZombie = "zombie"
 
   fun build_board () =
       B { f = Array.array (num_slots, %CI)

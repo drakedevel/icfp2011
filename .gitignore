@@ -4,5 +4,6 @@
 cm2mlb/cm2mlb.x86-linux
 sources-mlton.cm
 bin/ltg.x86-linux
+bin/ltg.x86-darwin
 bin/mlton-ltg
 sources.mlb
