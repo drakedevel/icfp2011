@@ -106,6 +106,12 @@ in
          in minBy length shiftEncode tempShift
          end
 
+     fun loadDumb d (% c) = [R d c]
+       | loadDumb d (CVal v) = int d v
+       | loadDumb d (CApp (%c, e)) = loadDumb d e @ [L c d]
+       | loadDumb d (CApp (e, %c)) = loadDumb d e @ [R d c]
+       | loadDumb d (CApp (e1, e2)) = loadDumb d e1 @ shift d e2
+
      (* A fast, constant-space loader.
       *
       * Loads a combinator using a modified version of sully's algorithm. Allocates temporary slots
