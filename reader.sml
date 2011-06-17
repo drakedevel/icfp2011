@@ -1,4 +1,4 @@
-structure Top =
+structure Reader =
 struct
   structure L = LTG
 
