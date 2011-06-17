@@ -99,7 +99,7 @@ struct
 
   fun finally f final =
       f () before ignore (final ())
-      handle e => (final (); raise e)
+      handle e => (ignore (final ()); raise e)
 
   (* A function to compute all permutations of a list that I wrote to
    * convince myself that I could do it after I was having a lot of

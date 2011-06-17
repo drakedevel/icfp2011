@@ -45,20 +45,19 @@ struct
 
   local
       fun proponent b = let
-	  val (b', mv) = randMove b
-      in
-	  ReaderWriter.put_move mv; opponent b'
-      end
+	      val (b', mv) = randMove b
+          val _ = ReaderWriter.put_move mv
+      in opponent b' end
 
       and opponent b = let
-	  val mv = ReaderWriter.get_move ()
-      in
-	  run_move b mv; proponent b
-      end
+	      val mv = ReaderWriter.get_move ()
+          val _ = run_move b mv
+      in proponent b end
   in
       fun main (name, args) = case args of
 				  ["0"] => proponent (build_board ())
 				| ["1"] => opponent (build_board ())
+                | _ => raise Fail "what do you want from me?"
 				  (*handle _ => OS.Process.success*)
   end
 end

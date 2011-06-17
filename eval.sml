@@ -94,7 +94,7 @@ struct
              | %CAttack & CVal i & arse & CVal n =>
                let val () = if v ! i < n then raise TooBig else
                             up v i $ (v ! i) - n
-                   val (CVal j) = arse
+                   val j = num id arse
                    val () = if is_dead $ v' ! j  then () else
                             up v' j $ clamp $ v' ! j -- (n * 9 div 10)
                in %CI end
@@ -102,7 +102,7 @@ struct
              | %CHelp & CVal i & arse & CVal n =>
                let val () = if v ! i < n then raise TooBig else
                             up v i $ (v ! i) - n
-                   val (CVal j) = arse
+                   val j = num id arse
                    val () = if is_dead $ v' ! j then () else
                             up v' j $ clamp $ v' ! j ++ (n * 11 div 10)
                in %CI end
@@ -131,7 +131,7 @@ struct
   (* To be run before a turn. Runs all of the zombies *)
   fun run_zombies (board as B{f,v,...}) =
       let fun handle_zombie (i, ~1) =
-              (eval board (CApp (f ! i, %CI)) true;
+              (ignore $ eval board (CApp (f ! i, %CI)) true;
                up f i $ %CI;
                0)
             | handle_zombie (_, n) = n
