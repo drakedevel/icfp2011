@@ -1,10 +1,7 @@
 structure Reader =
 struct
   structure L = LTG
-
-  type move = {dir : L.app_dir,
-               card : L.comb,
-               slot : int}
+  structure E = Evaluator
 
   fun read () = valOf (TextIO.inputLine TextIO.stdIn)
 
@@ -31,14 +28,14 @@ struct
     if n = 1 then L.LeftApp else L.RightApp
   end
 
-  fun get_move () = let
+  fun get_move () : E.move = let
     val dir_str = read ()
     val () = TextIO.print dir_str
     val card_str = read ()
     val slot_str = read ()
-  in
-    {dir = to_dir dir_str,
-    card = to_card card_str,
-    slot = to_int slot_str}
+  in E.move (to_dir dir_str)
+            (to_card card_str)
+            (to_int slot_str)
+     handle _ => raise Fail "server gave us invalid move"
   end
 end

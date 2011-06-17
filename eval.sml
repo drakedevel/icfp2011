@@ -1,6 +1,14 @@
 local open LTG in
 signature EVALUATOR =
 sig
+  type move = app_dir * card * slotno
+
+  val is_alive : vitality -> bool
+  val is_valid_slot : slotno -> bool
+
+  (* smart ctor for moves *)
+  val move : app_dir -> card -> slotno -> move
+
   val switch_teams : board -> board
 
   (* eval board K is_zombie ==> result
@@ -19,7 +27,7 @@ sig
    *
    * Returns (SOME result) or NONE on error.
    *)
-  val run_move : board -> app_dir -> card -> slotno -> comb option
+  val run_move : board -> move -> comb option
 end
 end
 
@@ -41,10 +49,17 @@ struct
   val NotDead = EvalError "not dead"
   val Dead = EvalError "slot dead"
 
+  type move = app_dir * card * slotno
+
   fun switch_teams (B {f, v, f', v'}) = B {f=f', v=v', v'=v, f'=f}
   fun is_valid_slot n = n >= 0 andalso n <= 255
   fun is_alive v = v > 0
   val is_dead = not o is_alive
+
+  (* smart ctor for moves *)
+  fun move app_dir card slotno =
+      if is_valid_slot slotno then (app_dir, card, slotno)
+      else raise Fail "invalid move"
 
   val max = 65335
   val max_slot = 255
@@ -126,7 +141,7 @@ struct
             | handle_zombie (_, n) = n
       in Array.modifyi handle_zombie v end
 
-  fun run_move (board as B{f,v,...}) direction card slot_num =
+  fun run_move (board as B{f,v,...}) (direction, card, slot_num) =
       let val slot = f ! slot_num
           val () = if is_dead $ v ! slot_num then raise Dead else ()
           val result = (eval board (case direction of
