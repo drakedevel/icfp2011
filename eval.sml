@@ -32,7 +32,11 @@ struct
 
   fun clamp n = if n < 0 then 0 else if n > max then max else n
 
-  fun apply (B {f, v, f', v'}) expr = let
+  fun apply (B {f, v, f', v'}) expr zombie = let
+      val ++ = if zombie then (op -) else (op +)
+      val -- = if zombie then (op +) else (op -)
+      infix 6 ++ --
+
       fun num f (CVal n) = f n
         | num _ _ = raise Stuck
 
@@ -48,13 +52,13 @@ struct
              | CK & x & _ => x
              | CInc & e => num 
                            (fn i => let val n = v ! i
-                                        val () = if n = max orelse n <= 0 then ()
-                                                 else up v i $ n+1
+                                        val () = if is_dead n then ()
+                                                 else up v i $ clamp $ n++1
                                     in CI end) e
              | CDec & e => num
                            (fn i => let val n = v ! (max_slot-i)
-                                        val () = if n <= 0 then ()
-                                                 else up v (max_slot-i) (n-1)
+                                        val () = if is_dead n then ()
+                                                 else up v (max_slot-i) $ clamp (n--1)
                                     in CI end) e
              (* attack and help have a bunch of corner cases. *)
              | CAttack & CVal i & arse & CVal n =>
@@ -62,7 +66,7 @@ struct
                             up v i $ (v ! i) - n
                    val (CVal j) = arse
                    val () = if is_dead $ v' ! j  then () else
-                            up v' j $ clamp $ v' ! j - (n * 9 div 10)
+                            up v' j $ clamp $ v' ! j -- (n * 9 div 10)
                in CI end
              | CAttack & _ & _ & _ => raise Stuck
              | CHelp & CVal i & arse & CVal n =>
@@ -70,7 +74,7 @@ struct
                             up v i $ (v ! i) - n
                    val (CVal j) = arse
                    val () = if is_dead $ v' ! j then () else
-                            up v' j $ clamp $ v' ! j + (n * 11 div 10)
+                            up v' j $ clamp $ v' ! j ++ (n * 11 div 10)
                in CI end
              | CHelp & _ & _ & _ => raise Stuck
              | CCopy & e => num (sub f') e
@@ -81,8 +85,7 @@ struct
                 up v' (255-i) ~1;
                 CI)
              | CZombie & _ & _ => raise Stuck
-             | e => e
-)
+             | e => e)
 
       fun app (CApp _) 1000 = raise TooManyApps
         | app (CApp (e1, e2)) n =
