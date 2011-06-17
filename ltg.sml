@@ -70,4 +70,6 @@ struct
       B { f = Util.copyArray f, v = Util.copyArray v,
           f' = Util.copyArray f', v' = Util.copyArray v' }
 
+  fun %% CZero = CVal 0
+    | %% x = % x
 end

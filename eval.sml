@@ -19,7 +19,7 @@ sig
   val run_zombies : board -> unit
 
   (* run_move board app_dir card slot ==> result
-   *
+  n *
    * Returns (SOME result) or NONE on error.
    *)
   val run_move : board -> move -> comb option
@@ -134,8 +134,8 @@ struct
       let val slot = f ! slot_num
           val () = if is_dead $ v ! slot_num then raise Dead else ()
           val result = (eval board (case direction of
-                                        LeftApp => CApp (% card, slot)
-                                      | RightApp => CApp (slot, % card)) false)
+                                        LeftApp => CApp (%% card, slot)
+                                      | RightApp => CApp (slot, %% card)) false)
           val () = up f slot_num $ getOpt (result, %CI)
       in result end
 
