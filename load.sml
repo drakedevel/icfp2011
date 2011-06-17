@@ -66,7 +66,22 @@ in
             [ L CDbl dest ]
             (map (fn true => [ L CSucc dest ] | false => [])
                  (toBinary v))
-   
+    (*basically the same as above, but as only one function, and returning 
+     * the comb that computes the value, rather than the move list, since the
+     * comb needs to be shifted into place.  NOTE: %CZero, rather than %%CZero
+     * this is what we want, since we want to generate a card in the end
+     *)
+   fun encode 0 : comb = %CZero
+     | encode x = if odd x then
+                      CApp (%CSucc, encode (x-1)) 
+                  else 
+                      CApp (%CDbl, encode (x div 2))
+
+   (*if f!d == F, then run_moves (shift d E) will leave (f!d) == CApp(F,E)*)
+   fun shift (dest : slotno) (CApp (e1,e2)) =
+       [L CK dest, L CS dest] @ shift dest e1 @ shift dest e2
+     | shift (dest : slotno) (%c) = [R dest c]
+     | shift (dest : slotno) (CVal n) = shift dest (encode n)
   end
 
 end
