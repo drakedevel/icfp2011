@@ -1,34 +1,32 @@
-local open LTG in
 signature EVALUATOR =
 sig
-  type move = app_dir * card * slotno
-  val move : app_dir -> card -> slotno -> move (* smart ctor for moves *)
-  val L : card -> slotno -> move               (* left app *)
-  val R : slotno -> card -> move               (* right app *)
+  type move = LTG.app_dir * LTG.card * LTG.slotno
+  val move : LTG.app_dir -> LTG.card -> LTG.slotno -> move (* smart ctor for moves *)
+  val L : LTG.card -> LTG.slotno -> move               (* left app *)
+  val R : LTG.slotno -> LTG.card -> move               (* right app *)
 
-  val switch_teams : board -> board
+  val switch_teams : LTG.board -> LTG.board
 
-  (* eval board K is_zombie ==> result
+  (* eval LTG.board K is_zombie ==> result
    *
-   * evaluates combinator K in board. acts like a zombie iff is_zombie is true. Returns (SOME
+   * evaluates LTG.combinator K in LTG.board. acts like a zombie iff is_zombie is true. Returns (SOME
    * result) or NONE on error.
    *)
-  val eval : board -> comb -> bool -> comb option
+  val eval : LTG.board -> LTG.comb -> bool -> LTG.comb option
 
-  (* run_zombies board ==> ()
+  (* run_zombies LTG.board ==> ()
    *
-   * Runs all zombies on the board. Use before turn. *)
-  val run_zombies : board -> unit
+   * Runs all zombies on the LTG.board. Use before turn. *)
+  val run_zombies : LTG.board -> unit
 
-  (* run_move board move ==> result
+  (* run_move LTG.board move ==> result
    *
    * Returns (SOME result) or NONE on error.
    *)
-  val run_move : board -> move -> comb option
+  val run_move : LTG.board -> move -> LTG.comb option
 
-  (* run_moves board moves ==> () *)
-  val run_moves : board -> move list -> unit
-end
+  (* run_moves LTG.board moves ==> () *)
+  val run_moves : LTG.board -> move list -> unit
 end
 
 structure Evaluator : EVALUATOR =
