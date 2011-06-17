@@ -2,9 +2,10 @@ structure LTG =
 struct
   datatype comb =
            CVal of int
-         | & of comb * comb
+         | CApp of comb * comb
+         | & of comb * comb (* staged computation *)
          | CI
-         | CZero
+         (* | CZero *) (* Zero is just CVal 0 *)
          | CSucc
          | CDbl
          | CGet
@@ -18,5 +19,8 @@ struct
          | CCopy
          | CRevive
          | CZombie
+
+  datatype board = B of { f: comb array, v: int array,
+                          f': comb array, v': int array }
 
 end
