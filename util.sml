@@ -36,6 +36,12 @@ struct
   fun optionToList NONE = []
     | optionToList (SOME x) = [x]
 
+  fun after (f : 'a -> 'b) (g : 'a -> unit) (x : 'a) : 'b =
+      let val r = Right (f x) handle e => Left e
+          val _ = g x
+      in case r of Right v => v | Left e => raise e
+      end
+
   (* Use of this function should probably be avoided. *)
   fun listSet _ [] _ = raise Subscript
     | listSet 0 (_::xs) x = x::xs
