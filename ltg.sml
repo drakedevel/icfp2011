@@ -4,6 +4,13 @@ struct
   type value = int              (* field value (other than function) *)
   type vitality = int
 
+  val max = 65335
+  val max_slot = 255
+
+  fun is_alive v = v > 0
+  val is_dead = not o is_alive
+  fun is_valid_slot n = n >= 0 andalso n <= max_slot
+
   datatype card = 
            CI
          | CZero

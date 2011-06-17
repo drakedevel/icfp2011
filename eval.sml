@@ -2,12 +2,7 @@ local open LTG in
 signature EVALUATOR =
 sig
   type move = app_dir * card * slotno
-
-  val is_alive : vitality -> bool
-  val is_valid_slot : slotno -> bool
-
-  (* smart ctor for moves *)
-  val move : app_dir -> card -> slotno -> move
+  val move : app_dir -> card -> slotno -> move (* smart ctor for moves *)
 
   val switch_teams : board -> board
 
@@ -52,17 +47,11 @@ struct
   type move = app_dir * card * slotno
 
   fun switch_teams (B {f, v, f', v'}) = B {f=f', v=v', v'=v, f'=f}
-  fun is_valid_slot n = n >= 0 andalso n <= 255
-  fun is_alive v = v > 0
-  val is_dead = not o is_alive
 
   (* smart ctor for moves *)
   fun move app_dir card slotno =
       if is_valid_slot slotno then (app_dir, card, slotno)
       else raise Fail "invalid move"
-
-  val max = 65335
-  val max_slot = 255
 
   fun clamp n = if n < 0 then 0 else if n > max then max else n
 
