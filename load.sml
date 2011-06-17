@@ -1,3 +1,16 @@
+signature ALLOCATOR =         (* imperative *)
+sig
+  exception OOM
+  type allocr                   (* allocator *)
+  val new : unit -> allocr
+  val copy : allocr -> allocr
+  val alloc : allocr -> LTG.slotno
+  (* raises OOM /before/ allocating anything if would overflow. *)
+  val allocMany : allocr -> int -> LTG.slotno list
+  val free : allocr -> LTG.slotno -> unit
+  val withSlot : allocr -> (LTG.slotno -> 'a) -> 'a
+end
+
 local
     open Util infixr 0 $
     open LTG infix &
@@ -7,19 +20,6 @@ local
     val L = E.L
     val R = E.R
 in
-
-  signature ALLOCATOR =         (* imperative *)
-  sig
-    exception OOM
-    type allocr                   (* allocator *)
-    val new : unit -> allocr
-    val copy : allocr -> allocr
-    val alloc : allocr -> slotno
-    (* raises OOM /before/ allocating anything if would overflow. *)
-    val allocMany : allocr -> int -> slotno list
-    val free : allocr -> slotno -> unit
-    val withSlot : allocr -> (slotno -> 'a) -> 'a
-  end
 
   structure Allocator : ALLOCATOR =
   struct
