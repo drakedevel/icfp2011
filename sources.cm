@@ -13,7 +13,7 @@ Group is
 		ltg.sml
 		memoize.sml
 		print.sml
-		timeout.sml
+		(*timeout.sml*)
 		union-find.sml
 		util.sml
 		int-map.sml
