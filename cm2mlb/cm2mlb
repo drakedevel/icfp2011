@@ -1,0 +1,4 @@
+#!/bin/sh
+
+DIR=`dirname "$0"`
+sml @SMLcmdname=$0 @SMLload=$DIR/cm2mlb.x86-linux "$@"

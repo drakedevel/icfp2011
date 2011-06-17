@@ -34,11 +34,13 @@ $(CM2MLB_HEAP): cm2mlb.cm cm2mlb.sml gen-mlb.sml cm2mlb-map
 
 .PHONY: clean
 clean:
-	../../bin/clean
+	rm cm2mlb.x86-linux
 
+# this is some bullshit
 SMLDIR := $(dir $(shell which sml))
 .PHONY: install
 install: $(CM2MLB_HEAP)
-	rm -f $(SMLDIR).heap/$(CM2MLB_HEAP) $(SMLDIR)cm2mlb
+	rm -f $(SMLDIR)/.heap/$(CM2MLB_HEAP) $(SMLDIR)/cm2mlb
 	cp $(CM2MLB_HEAP) $(SMLDIR).heap
 	(cd $(SMLDIR) ; ln -s .run-sml cm2mlb)
+	ln -s $(SMLDIR)/cm2mlb .
