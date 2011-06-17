@@ -9,7 +9,7 @@ struct
 
   fun to_card s =
     if s = "I\n" then L.CI else
-    if s = "succ\n" then L.CSucc else
+    if s = "zero\n" then L.CZero else
     if s = "succ\n" then L.CSucc else
     if s = "dbl\n" then L.CDbl else
     if s = "get\n" then L.CGet else
