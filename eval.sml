@@ -1,6 +1,29 @@
-structure Evaluator =
+signature EVALUATOR =
+sig
+  val switch_teams : LTG.board -> LTG.board
+
+  (* eval board K is_zombie ==> result
+   *
+   * evaluates combinator K in board. acts like a zombie iff is_zombie is true. Returns (SOME
+   * result) or NONE on error.
+   *)
+  val eval : LTG.board -> LTG.comb -> bool -> LTG.comb option
+
+  (* run_zombies board ==> ()
+   *
+   * Runs all zombies on the board. Use before turn. *)
+  val run_zombies : LTG.board -> unit
+
+  (* run_move board app_dir card slot ==> result
+   *
+   * Returns (SOME result) or NONE on error.
+   *)
+  val run_move : LTG.board -> LTG.app_dir -> LTG.card -> int -> LTG.comb option
+end
+
+structure Evaluator : EVALUATOR =
 struct
-  infixr 0 $ fun f $ x = f x
+  open Util infixr 0 $
 
   open LTG
   infix &
@@ -26,7 +49,7 @@ struct
 
   fun clamp n = if n < 0 then 0 else if n > max then max else n
 
-  fun apply (B {f, v, f', v'}) expr zombie = let
+  fun eval (B {f, v, f', v'}) expr zombie = let
       val ++ = if zombie then (op -) else (op +)
       val -- = if zombie then (op +) else (op -)
       infix 6 ++ --
@@ -95,18 +118,18 @@ struct
   (* To be run before a turn. Runs all of the zombies *)
   fun run_zombies (board as B{f,v,...}) =
       let fun handle_zombie (i, ~1) =
-              (apply board (CApp (f ! i, %CI)) true;
+              (eval board (CApp (f ! i, %CI)) true;
                up f i $ %CI;
                0)
             | handle_zombie (_, n) = n
       in Array.modifyi handle_zombie v end
 
-  fun run_move (board as B{f,v,...}) direction slot_num card =
+  fun run_move (board as B{f,v,...}) direction card slot_num =
       let val slot = f ! slot_num
           val () = if is_dead $ v ! slot_num then raise Dead else ()
-          val result = (apply board (case direction of
-                                         LeftApp => CApp (card, slot)
-                                       | RightApp => CApp (slot, card)) false)
+          val result = (eval board (case direction of
+                                        LeftApp => CApp (% card, slot)
+                                      | RightApp => CApp (slot, % card)) false)
           val () = up f slot_num $ getOpt (result, %CI)
       in result end
 

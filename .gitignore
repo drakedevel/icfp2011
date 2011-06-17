@@ -1,2 +1,8 @@
 .cm
 .*.swp
+*~
+cm2mlb/cm2mlb.x86-linux
+sources-mlton.cm
+bin/ltg.x86-linux
+bin/mlton-ltg
+sources.mlb

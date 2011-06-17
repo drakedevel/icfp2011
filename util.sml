@@ -3,6 +3,9 @@
 
 structure Util =
 struct
+  infixr 0 $
+  fun f $ x = f x
+
   fun id x = x
 
   fun curry2 f x y = f (x, y)
