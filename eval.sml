@@ -109,7 +109,7 @@ struct
         | app e n = (e, n)
 
   in SOME $ #1 $ app expr 0
-     handle EvalError _ => NONE end
+     handle _ => NONE end
 
   (* To be run before a turn. Runs all of the zombies *)
   fun run_zombies (board as B{f,v,...}) =
