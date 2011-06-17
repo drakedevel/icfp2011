@@ -1,24 +1,34 @@
+local open LTG in
 signature EVALUATOR =
 sig
-  val switch_teams : LTG.board -> LTG.board
+  type move = app_dir * card * slotno
+  val move : app_dir -> card -> slotno -> move (* smart ctor for moves *)
+  val L : card -> slotno -> move               (* left app *)
+  val R : slotno -> card -> move               (* right app *)
+
+  val switch_teams : board -> board
 
   (* eval board K is_zombie ==> result
    *
    * evaluates combinator K in board. acts like a zombie iff is_zombie is true. Returns (SOME
    * result) or NONE on error.
    *)
-  val eval : LTG.board -> LTG.comb -> bool -> LTG.comb option
+  val eval : board -> comb -> bool -> comb option
 
   (* run_zombies board ==> ()
    *
    * Runs all zombies on the board. Use before turn. *)
-  val run_zombies : LTG.board -> unit
+  val run_zombies : board -> unit
 
-  (* run_move board app_dir card slot ==> result
+  (* run_move board move ==> result
    *
    * Returns (SOME result) or NONE on error.
    *)
-  val run_move : LTG.board -> LTG.app_dir -> LTG.card -> int -> LTG.comb option
+  val run_move : board -> move -> comb option
+
+  (* run_moves board moves ==> () *)
+  val run_moves : board -> move list -> unit
+end
 end
 
 structure Evaluator : EVALUATOR =
@@ -39,13 +49,17 @@ struct
   val NotDead = EvalError "not dead"
   val Dead = EvalError "slot dead"
 
-  fun switch_teams (B {f, v, f', v'}) = B {f=f', v=v', v'=v, f'=f}
-  fun is_valid_slot n = n >= 0 andalso n <= 255
-  fun is_alive vitality = vitality > 0
-  val is_dead = not o is_alive
+  type move = app_dir * card * slotno
 
-  val max = 65335
-  val max_slot = 255
+  fun switch_teams (B {f, v, f', v'}) = B {f=f', v=v', v'=v, f'=f}
+
+  (* smart ctor for moves *)
+  fun move app_dir card slotno : move =
+      if is_valid_slot slotno then (app_dir, card, slotno)
+      else raise Fail "invalid move"
+
+  val L = move LeftApp
+  val R = flip (move RightApp)
 
   fun clamp n = if n < 0 then 0 else if n > max then max else n
 
@@ -64,6 +78,7 @@ struct
              | %CSucc & e => num (fn n => CVal $ n+1) e
              | %CDbl & e => num (fn n => CVal $ n*2) e
              | %CGet & e => num (sub f) e
+             | %CPut & _ => %CI (* NOTE unnecessary but makes output cleaner *)
              | %CPut & _ & e => e
              | %CS & x & y & z => CApp (CApp (x, z), CApp (y, z))
              | %CK & x & _ => x
@@ -124,14 +139,15 @@ struct
             | handle_zombie (_, n) = n
       in Array.modifyi handle_zombie v end
 
-  fun run_move (board as B{f,v,...}) direction card slot_num =
+  fun run_move (board as B{f,v,...}) (direction, card, slot_num) =
       let val slot = f ! slot_num
           val () = if is_dead $ v ! slot_num then raise Dead else ()
           val result = (eval board (case direction of
-                                        LeftApp => CApp (% card, slot)
-                                      | RightApp => CApp (slot, % card)) false)
+                                        LeftApp => CApp (%% card, slot)
+                                      | RightApp => CApp (slot, %% card)) false)
           val () = up f slot_num $ getOpt (result, %CI)
       in result end
 
+  fun run_moves board moves = List.app (const () o run_move board) moves
 
 end

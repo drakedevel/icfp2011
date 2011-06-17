@@ -1,2 +1,14 @@
-This is empty.
-Permissions test
+so, the algorithm is
+we define a function "shift E", that produces a series of 
+instructions such that if they are applied to a cell containing 
+F, the cell will contain F E
+then, we define:
+shift C = right C     (C is a base combinator)
+shift (e1 e2) = left K; left S; shift e1; shift e2
+
+proof by induction:
+if e is a combinator, then we apply right C, yielding F C
+if e is (e1 e2), then we apply left K, left S, yielding S (K F)
+we then do shift e1; by induction, this yields S (K F) e1
+we then do shift e2; by induction, this yields S (K F) e1 e2
+evaluating that gives (K F e2) (e1 e2) -> F (e1 e2)

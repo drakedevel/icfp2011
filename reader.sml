@@ -1,10 +1,7 @@
 structure ReaderWriter =
 struct
   structure L = LTG
-
-  type move = {dir : L.app_dir,
-               card : L.comb,
-               slot : int}
+  structure E = Evaluator
 
   fun read () = valOf (TextIO.inputLine TextIO.stdIn)
 
@@ -55,11 +52,11 @@ struct
 
   fun from_int i = (Int.toString i) ^ "\n"
 
-  fun get_move () = let
+  fun get_move () : E.move = let
       val dir = to_dir (read ())
       val a_str = read ()
       val b_str = read ()
-  in
+  in E.move (to_dir dir_str)
       case dir of
 	  L.LeftApp => {dir = dir, card = to_card a_str, slot = to_int b_str}
 	| L.RightApp => {dir = dir, card = to_card b_str, slot = to_int a_str}
