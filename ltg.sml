@@ -19,6 +19,7 @@ struct
          | CCopy
          | CRevive
          | CZombie
+         | CVar of Variable.var
 
   datatype app_dir = LeftApp | RightApp
 
