@@ -20,6 +20,8 @@ struct
          | CRevive
          | CZombie
 
+  datatype app_dir = LeftApp | RightApp
+
   datatype board = B of { f: comb array, v: int array,
                           f': comb array, v': int array }
 

@@ -14,6 +14,7 @@ struct
   val Stuck = EvalError "sexceptiontuck"
   val TooBig = EvalError "too big"
   val NotDead = EvalError "not dead"
+  val Dead = EvalError "slot dead"
 
   fun switch_teams (B {f, v, f', v'}) = B {f=f', v=v', v'=v, f'=f}
   fun is_valid_slot n = n >= 0 andalso n <= 255
@@ -88,7 +89,26 @@ struct
           in app (reduce (e1' & e2')) (n+1) end
         | app e n = (e, n)
 
+  in SOME $ #1 $ app expr 0
+     handle EvalError _ => NONE end
 
-  in app expr 0 end
+  (* To be run before a turn. Runs all of the zombies *)
+  fun run_zombies (board as B{f,v,...}) =
+      let fun handle_zombie (i, ~1) =
+              (apply board (CApp (f ! i, CI)) true;
+               up f i CI;
+               0)
+            | handle_zombie (_, n) = n
+      in Array.modifyi handle_zombie v end
+
+  fun run_move (board as B{f,v,...}) direction slot_num card =
+      let val slot = f ! slot_num
+          val () = if is_dead $ v ! slot_num then raise Dead else ()
+          val result = (apply board (case direction of
+                                         LeftApp => CApp (card, slot)
+                                       | RightApp => CApp (slot, card)) false)
+          val () = up f slot_num $ getOpt (result, CI)
+      in result end
+
 
 end
