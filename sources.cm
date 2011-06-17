@@ -17,4 +17,6 @@ Group is
 		union-find.sml
 		util.sml
 		int-map.sml
+
+		reader.sml
 		top.sml

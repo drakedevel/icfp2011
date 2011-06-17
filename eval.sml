@@ -4,22 +4,26 @@ sig
 
   (* eval board K is_zombie ==> result
    *
-   * evaluates combinator K in board. acts like a zombie iff is_zombie is true.
+   * evaluates combinator K in board. acts like a zombie iff is_zombie is true. Returns (SOME
+   * result) or NONE on error.
    *)
   val eval : LTG.board -> LTG.comb -> bool -> LTG.comb option
 
-  (* run_zombies board
+  (* run_zombies board ==> ()
+   *
    * Runs all zombies on the board. Use before turn. *)
   val run_zombies : LTG.board -> unit
 
-  (* run_move board app_dir slot card ==> result *)
-  (* Returns (SOME result) or NONE on error. *)
-  val run_move : LTG.board -> LTG.app_dir -> int -> LTG.card -> LTG.comb option
+  (* run_move board app_dir card slot ==> result
+   *
+   * Returns (SOME result) or NONE on error.
+   *)
+  val run_move : LTG.board -> LTG.app_dir -> LTG.card -> int -> LTG.comb option
 end
 
 structure Evaluator : EVALUATOR =
 struct
-  infixr 0 $ fun f $ x = f x
+  open Util infixr 0 $
 
   open LTG
   infix &
@@ -120,7 +124,7 @@ struct
             | handle_zombie (_, n) = n
       in Array.modifyi handle_zombie v end
 
-  fun run_move (board as B{f,v,...}) direction slot_num card =
+  fun run_move (board as B{f,v,...}) direction card slot_num =
       let val slot = f ! slot_num
           val () = if is_dead $ v ! slot_num then raise Dead else ()
           val result = (eval board (case direction of
