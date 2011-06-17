@@ -31,6 +31,9 @@ struct
 
   val num_slots = 256
   val init_vitality = 10000
+
+  fun show_card _ = "SomeCard"
+
   fun build_board () =
       B { f = Array.array (num_slots, %CI)
         , v = Array.array (num_slots, init_vitality)
