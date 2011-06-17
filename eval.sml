@@ -73,8 +73,8 @@ struct
           (case e of
                CVal _ & _ => raise Stuck
              | %CI & e => e
-             | %CSucc & e => num (fn n => CVal $ n+1) e
-             | %CDbl & e => num (fn n => CVal $ n*2) e
+             | %CSucc & e => num (fn n => CVal $ clamp $ n+1) e
+             | %CDbl & e => num (fn n => CVal $ clamp $ n*2) e
              | %CGet & e => num (sub f) e
              | %CPut & _ => %CI (* NOTE unnecessary but makes output cleaner *)
              | %CPut & _ & e => e
