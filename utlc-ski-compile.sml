@@ -34,8 +34,8 @@ struct
   fun convertExpr (U.EVar x) = L.CVar x
     | convertExpr (U.EApp (e1, e2)) = (convertExpr e1) @ (convertExpr e2)
     | convertExpr (U.ELam (x, e)) = if isIdempotent x e andalso isHalting e
-				    then bracket x (convertExpr e)
-				    else bracket x (convertExpr e)
+                    then bracket x (convertExpr e)
+                    else bracket x (convertExpr e)
     | convertExpr (U.% c) = L.% c
 
 end

@@ -57,8 +57,8 @@ struct
       val b_str = read ()
   in
       case dir of
-	  L.LeftApp => E.move dir (to_card a_str) (to_int b_str)
-	| L.RightApp => E.move dir (to_card b_str) (to_int a_str)
+      L.LeftApp => E.move dir (to_card a_str) (to_int b_str)
+    | L.RightApp => E.move dir (to_card b_str) (to_int a_str)
   end
 
   fun put_move (dir,card,slot) = let
@@ -68,7 +68,7 @@ struct
   in
       write dir_str;
       case dir of
-	  L.LeftApp => (write card_str; write slot_str)
-	| L.RightApp => (write slot_str; write card_str)
+      L.LeftApp => (write card_str; write slot_str)
+    | L.RightApp => (write slot_str; write card_str)
   end
 end
