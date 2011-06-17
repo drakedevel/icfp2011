@@ -2,7 +2,7 @@ structure LTG =
 struct
   datatype card = 
            CI
-         (* | CZero *) (* Zero is just CVal 0 *)
+         | CZero
          | CSucc
          | CDbl
          | CGet
@@ -16,10 +16,10 @@ struct
          | CCopy
          | CRevive
          | CZombie
-         | CVar of Variable.var
 
   datatype comb =
            CVal of int
+         | CVar of Variable.var
          | CApp of comb * comb
          | & of comb * comb (* staged computation *)
          | % of card
@@ -33,6 +33,7 @@ struct
   val init_vitality = 10000
 
   fun show_card CI = "I"
+    | show_card CZero = "Zero"
     | show_card CSucc = "Succ"
     | show_card CDbl = "Dbl"
     | show_card CGet = "Get"
@@ -46,7 +47,6 @@ struct
     | show_card CCopy = "Copy"
     | show_card CRevive = "Revive"
     | show_card CZombie = "Zombie"
-    | show_card (CVar v) = "Var -"
 
   fun build_board () =
       B { f = Array.array (num_slots, %CI)
