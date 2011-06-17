@@ -7,6 +7,9 @@ struct
   fun f $ x = f x
 
   fun id x = x
+  fun flip f x y = f y x
+  fun const x _ = x
+  fun thunk f x () = f x
 
   fun curry2 f x y = f (x, y)
   fun curry3 f x y z = f (x, y, z)
@@ -41,6 +44,17 @@ struct
           val _ = g x
       in case r of Right v => v | Left e => raise e
       end
+
+  fun even x = x mod 2 = 0
+  val odd = not o even
+
+  (* TODO: make this tail-recursive *)
+  fun intersperse _ [] = []
+    | intersperse _ [x] = [x]
+    | intersperse x (y::ys) = y :: x :: intersperse x ys
+
+  fun intercalate (xs : 'a list) (xss : 'a list list) =
+      List.concat (intersperse xs xss)
 
   (* Use of this function should probably be avoided. *)
   fun listSet _ [] _ = raise Subscript

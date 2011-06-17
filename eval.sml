@@ -3,6 +3,8 @@ signature EVALUATOR =
 sig
   type move = app_dir * card * slotno
   val move : app_dir -> card -> slotno -> move (* smart ctor for moves *)
+  val L : card -> slotno -> move               (* left app *)
+  val R : slotno -> card -> move               (* right app *)
 
   val switch_teams : board -> board
 
@@ -18,11 +20,14 @@ sig
    * Runs all zombies on the board. Use before turn. *)
   val run_zombies : board -> unit
 
-  (* run_move board app_dir card slot ==> result
-  n *
+  (* run_move board move ==> result
+   *
    * Returns (SOME result) or NONE on error.
    *)
   val run_move : board -> move -> comb option
+
+  (* run_moves board moves ==> () *)
+  val run_moves : board -> move list -> unit
 end
 end
 
@@ -49,9 +54,12 @@ struct
   fun switch_teams (B {f, v, f', v'}) = B {f=f', v=v', v'=v, f'=f}
 
   (* smart ctor for moves *)
-  fun move app_dir card slotno =
+  fun move app_dir card slotno : move =
       if is_valid_slot slotno then (app_dir, card, slotno)
       else raise Fail "invalid move"
+
+  val L = move LeftApp
+  val R = flip (move RightApp)
 
   fun clamp n = if n < 0 then 0 else if n > max then max else n
 
@@ -70,6 +78,7 @@ struct
              | %CSucc & e => num (fn n => CVal $ n+1) e
              | %CDbl & e => num (fn n => CVal $ n*2) e
              | %CGet & e => num (sub f) e
+             | %CPut & _ => %CI (* NOTE unnecessary but makes output cleaner *)
              | %CPut & _ & e => e
              | %CS & x & y & z => CApp (CApp (x, z), CApp (y, z))
              | %CK & x & _ => x
@@ -139,5 +148,6 @@ struct
           val () = up f slot_num $ getOpt (result, %CI)
       in result end
 
+  fun run_moves board moves = List.app (const () o run_move board) moves
 
 end
