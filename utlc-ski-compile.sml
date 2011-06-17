@@ -9,11 +9,13 @@ struct
   infix @
   val (op @) = L.CApp
 
-  fun bracket x (L.% (C as (L.CVar y))) =
-      if V.equal (x, y) then (L.% L.CI)
-      else (L.% L.CK) @ (L.% C)
-    | bracket x (L.CApp (C1, C2)) = (L.% L.CS) @ (bracket x C1) @ (bracket x C2)
-    | bracket x C = (L.% L.CK) @ C
+  local val % = L.% in
+    fun bracket x (C as L.CVar y) =
+        if V.equal (x, y) then (% L.CI)
+        else (% L.CK) @ C
+      | bracket x (L.CApp (C1, C2)) = %L.CS @ bracket x C1 @ bracket x C2
+      | bracket x C = (% L.CK) @ C
+  end
 
   fun isIdempotent x (U.EVar y) = not (V.equal (x, y))
     | isIdempotent x (U.EApp (e1, e2)) = (isIdempotent x e1) andalso (isIdempotent x e2)
@@ -29,7 +31,7 @@ struct
      infinite loops when called with any input. *)
   fun isHalting _ = true
 
-  fun convertExpr (U.EVar x) = L.% (L.CVar x)
+  fun convertExpr (U.EVar x) = L.CVar x
     | convertExpr (U.EApp (e1, e2)) = (convertExpr e1) @ (convertExpr e2)
     | convertExpr (U.ELam (x, e)) = if isIdempotent x e andalso isHalting e
 				    then bracket x (convertExpr e)
