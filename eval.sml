@@ -1,24 +1,26 @@
+local open LTG in
 signature EVALUATOR =
 sig
-  val switch_teams : LTG.board -> LTG.board
+  val switch_teams : board -> board
 
   (* eval board K is_zombie ==> result
    *
    * evaluates combinator K in board. acts like a zombie iff is_zombie is true. Returns (SOME
    * result) or NONE on error.
    *)
-  val eval : LTG.board -> LTG.comb -> bool -> LTG.comb option
+  val eval : board -> comb -> bool -> comb option
 
   (* run_zombies board ==> ()
    *
    * Runs all zombies on the board. Use before turn. *)
-  val run_zombies : LTG.board -> unit
+  val run_zombies : board -> unit
 
   (* run_move board app_dir card slot ==> result
    *
    * Returns (SOME result) or NONE on error.
    *)
-  val run_move : LTG.board -> LTG.app_dir -> LTG.card -> int -> LTG.comb option
+  val run_move : board -> app_dir -> card -> slotno -> comb option
+end
 end
 
 structure Evaluator : EVALUATOR =
@@ -41,7 +43,7 @@ struct
 
   fun switch_teams (B {f, v, f', v'}) = B {f=f', v=v', v'=v, f'=f}
   fun is_valid_slot n = n >= 0 andalso n <= 255
-  fun is_alive vitality = vitality > 0
+  fun is_alive v = v > 0
   val is_dead = not o is_alive
 
   val max = 65335

@@ -1,5 +1,9 @@
 structure LTG =
 struct
+  type slotno = int             (* slot number *)
+  type value = int              (* field value (other than function) *)
+  type vitality = int
+
   datatype card = 
            CI
          | CZero
@@ -18,7 +22,7 @@ struct
          | CZombie
 
   datatype comb =
-           CVal of int
+           CVal of value
          | CVar of Variable.var
          | CApp of comb * comb
          | & of comb * comb (* staged computation *)
@@ -26,11 +30,11 @@ struct
 
   datatype app_dir = LeftApp | RightApp
 
-  datatype board = B of { f : comb array, v: int array,
-                          f': comb array, v': int array }
+  datatype board = B of { f : comb array, v: vitality array,
+                          f': comb array, v': vitality array }
 
-  val num_slots = 256
-  val init_vitality = 10000
+  val num_slots : slotno = 256
+  val init_vitality : vitality = 10000
 
   fun show_card CI = "I"
     | show_card CZero = "zero"
