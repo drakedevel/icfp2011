@@ -1,4 +1,4 @@
-structure Reader =
+structure ReaderWriter =
 struct
   structure L = LTG
 
@@ -8,37 +8,71 @@ struct
 
   fun read () = valOf (TextIO.inputLine TextIO.stdIn)
 
+  fun write str = (TextIO.output (TextIO.stdOut, str); TextIO.flushOut TextIO.stdOut)
+
   fun to_int s = valOf (Int.fromString s)
 
-  fun to_card s =
-    if s = "I\n" then L.CI else
-    if s = "succ\n" then L.CSucc else
-    if s = "dbl\n" then L.CDbl else
-    if s = "get\n" then L.CGet else
-    if s = "put\n" then L.CPut else
-    if s = "S\n" then L.CS else
-    if s = "K\n" then L.CK else
-    if s = "inc\n" then L.CInc else
-    if s = "dec\n" then L.CDec else
-    if s = "attack\n" then L.CAttack else
-    if s = "help\n" then L.CHelp else
-    if s = "copy\n" then L.CCopy else
-    if s = "revive\n" then L.CRevive else
-    if s = "zombie\n" then L.CZombie else
-      raise Fail "owned"
+  fun to_card "I\n" = L.CI
+    | to_card "zero\n" = (L.% (L.CVal 0))
+    | to_card "succ\n" = L.CSucc
+    | to_card "dbl\n" = L.CDbl
+    | to_card "get\n" = L.CGet
+    | to_card "put\n" = L.CPut
+    | to_card "S\n" = L.CS
+    | to_card "K\n" = L.CK
+    | to_card "inc\n" = L.CInc
+    | to_card "dec\n" = L.CDec
+    | to_card "attack\n" = L.CAttack
+    | to_card "help\n" = L.CHelp
+    | to_card "copy\n" = L.CCopy
+    | to_card "revive\n" = L.CRevive
+    | to_card "zombie\n" = L.CZombie
+    | to_card x = raise Fail ("Invalid input card name " ^ x)
 
-  fun to_dir s = let val n = to_int s in
-    if n = 1 then L.LeftApp else L.RightApp
-  end
+  fun from_card L.CI = "I\n"
+    | from_card (L.% (L.CVal 0)) = "zero\n"
+    | from_card L.CSucc = "succ\n"
+    | from_card L.CDbl = "dbl\n"
+    | from_card L.CGet = "get\n"
+    | from_card L.CPut = "put\n"
+    | from_card L.CS = "S\n"
+    | from_card L.CK = "K\n"
+    | from_card L.CInc = "inc\n"
+    | from_card L.CDec = "dec\n"
+    | from_card L.CAttack = "attack\n"
+    | from_card L.CHelp = "help\n"
+    | from_card L.CCopy = "copy\n"
+    | from_card L.CRevive = "revive\n"
+    | from_card L.CZombie = "zombie\n"
+    | from_card _ = raise Fail "Invalid output card type."
+
+  fun to_dir "1\n" = L.LeftApp
+    | to_dir "2\n" = L.RightApp
+    | to_dir _ = raise Fail "Invalid input application direction."
+
+  fun from_dir L.LeftApp = "1\n"
+    | from_dir L.RightApp = "2\n"
+
+  fun from_int i = (Int.toString i) ^ "\n"
 
   fun get_move () = let
-    val dir_str = read ()
-    val () = TextIO.print dir_str
-    val card_str = read ()
-    val slot_str = read ()
+      val dir = to_dir (read ())
+      val a_str = read ()
+      val b_str = read ()
   in
-    {dir = to_dir dir_str,
-    card = to_card card_str,
-    slot = to_int slot_str}
+      case dir of
+	  L.LeftApp => {dir = dir, card = to_card a_str, slot = to_int b_str}
+	| L.RightApp => {dir = dir, card = to_card b_str, slot = to_int a_str}
+  end
+
+  fun put_move {dir,card,slot} = let
+      val dir_str = from_dir dir
+      val card_str = from_card card
+      val slot_str = from_int slot
+  in
+      write dir_str;
+      case dir of
+	  L.LeftApp => (write card_str; write slot_str)
+	| L.RightApp => (write slot_str; write card_str)
   end
 end

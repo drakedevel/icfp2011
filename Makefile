@@ -1,5 +1,5 @@
 all: ltg
-.PHONY: all tests ltg mlton-ltg
+.PHONY: all tests ltg mlton-ltg tar
 
 MLTON = mlton -const "Exn.keepHistory true" -default-ann "redundantMatch warn" -default-ann "sequenceNonUnit warn" -output
 
@@ -26,5 +26,9 @@ cm2mlb/cm2mlb.x86-linux:
 mlton-l4c: sources.mlb mlton-parse FORCE
 	$(MLTON) $(MLTON_TARG) sources.mlb
 
+tar: ltg.tar.gz
+
+ltg.tar.gz: bin/mlton-ltg
+	./build.sh $@
 
 FORCE: 
