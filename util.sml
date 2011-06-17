@@ -39,12 +39,6 @@ struct
   fun optionToList NONE = []
     | optionToList (SOME x) = [x]
 
-  fun after (f : 'a -> 'b) (g : 'a -> unit) (x : 'a) : 'b =
-      let val r = Right (f x) handle e => Left e
-          val _ = g x
-      in case r of Right v => v | Left e => raise e
-      end
-
   fun even x = x mod 2 = 0
   val odd = not o even
 
@@ -98,8 +92,11 @@ struct
       in xs :: rotate_lists rest end
 
   fun finally f final =
-      f () before ignore (final ())
-      handle e => (ignore (final ()); raise e)
+      f () before (final ())
+      handle e => (final (); raise e)
+
+  fun after f g x =
+      finally (fn () => f x) (fn () => g x)
 
   (* A function to compute all permutations of a list that I wrote to
    * convince myself that I could do it after I was having a lot of
