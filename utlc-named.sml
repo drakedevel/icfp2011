@@ -11,6 +11,6 @@ struct
 
   fun show e = case e of
       (EVar x) => V.name x
-    | (ELam (x,e)) => "\\" ^ V.name x ^ " => " ^ show e
+    | (ELam (x,e)) => "\\" ^ V.name x ^ " -> " ^ show e
     | (EApp (e1,e2)) => "(" ^ show e1 ^ ")(" ^ show e2 ^ ")"
 end
