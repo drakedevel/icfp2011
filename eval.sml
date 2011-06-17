@@ -9,23 +9,16 @@ struct
   fun sub x y = Array.sub (x, y)
   fun up x y z = Array.update (x, y, z)
 
-  exception TooManyApps
-  exception Stuck
-  exception InvalidSlot
-  exception TooBig
-  exception NotDead
+  exception EvalError of string
+  val TooManyApps = EvalError "too many apps"
+  val Stuck = EvalError "sexceptiontuck"
+  val TooBig = EvalError "too big"
+  val NotDead = EvalError "not dead"
 
   fun switch_teams (B {f, v, f', v'}) = B {f=f', v=v', v'=v, f'=f}
   fun is_valid_slot n = n >= 0 andalso n <= 255
   fun is_alive vitality = vitality > 0
   val is_dead = not o is_alive
-
-(*
-  fun read_field slots n = get_field $ Array.sub (slots, n)
-  fun read_vitality slots n = get_vitality $ Array.sub (slots, n)
-  fun write_field slots n =
-      let 
-*)
 
   val max = 65335
   val max_slot = 255
