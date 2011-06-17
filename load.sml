@@ -108,8 +108,10 @@ in
 
      fun loadDumb d (% c) = [R d c]
        | loadDumb d (CVal v) = int d v
+(*
        | loadDumb d (CApp (%c, e)) = loadDumb d e @ [L c d]
        | loadDumb d (CApp (e, %c)) = loadDumb d e @ [R d c]
+*)
        | loadDumb d (CApp (e1, e2)) = loadDumb d e1 @ shift d e2
 
      (* A fast, constant-space loader.
@@ -131,8 +133,10 @@ in
 
              (* loads an expression into dest, assuming dest contains I. *)
              fun load (% c) = [right c]
+(*
                | load (CApp (%c, e)) = load e @ [left c]  (* optimization *)
                | load (CApp (e, %c)) = load e @ [right c] (* optimization *)
+*)
                | load (CApp (e1, e2)) = load e1 @ shift e2
                | load (CVal v) = intNoPut dest v
          in left CPut (* load I into dest *) :: load expr
