@@ -43,6 +43,17 @@ struct
     | NONE => randMove b'
   end
 
+  fun xbox () =
+      let infix ?
+          val (op ?) = CApp
+
+          val alloc = Allocator.new ()
+          val [0,1] = Allocator.allocMany alloc 2
+          val payload = %CS ? (%CGet ? %CZero) ? (%CGet ? %CZero)
+          val copy_back = %CGet ? CVal 1
+      in Load.load alloc 1 payload @ Load.load alloc 0 copy_back end
+
+(*
   local
       fun proponent b = let
           val (b', mv) = randMove b
@@ -57,6 +68,26 @@ struct
       fun main (name, args) = case args of
                   ["0"] => proponent (build_board ())
                 | ["1"] => opponent (build_board ())
+                | _ => raise Fail "what do you want from me?"
+                  (*handle _ => OS.Process.success*)
+  end
+*)
+
+  local
+      val xbox_moves = xbox ()
+
+      fun proponent (mv::mvs) = let
+          val _ = ReaderWriter.put_move mv
+      in opponent mvs end
+        | proponent [] = proponent xbox_moves
+
+      and opponent mvs = let
+          val mv = ReaderWriter.get_move ()
+      in proponent mvs end
+  in
+      fun main (name, args) = case args of
+                  ["0"] => proponent []
+                | ["1"] => opponent []
                 | _ => raise Fail "what do you want from me?"
                   (*handle _ => OS.Process.success*)
   end
