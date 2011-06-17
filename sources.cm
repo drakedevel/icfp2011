@@ -8,7 +8,6 @@ Group is
 		variable.sml
 		variable-sig.sml
 		utlc-named.sml
-		ski.sml
 		utlc-ski-compile.sml
 		goodmap.sml
 		ltg.sml

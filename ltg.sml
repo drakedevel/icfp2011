@@ -16,6 +16,7 @@ struct
          | CCopy
          | CRevive
          | CZombie
+         | CVar of Variable.var
 
   datatype comb =
            CVal of int
@@ -25,14 +26,17 @@ struct
 
   datatype app_dir = LeftApp | RightApp
 
-  datatype board = B of { f: comb array, v: int array,
+  datatype board = B of { f : comb array, v: int array,
                           f': comb array, v': int array }
 
   val num_slots = 256
   val init_vitality = 10000
   fun build_board () =
-      B { f=Array.array (num_slots, %CI), v=Array.array (num_slots, init_vitality),
-          f'=Array.array (num_slots, %CI), v'=Array.array (num_slots, init_vitality) }
+      B { f = Array.array (num_slots, %CI)
+        , v = Array.array (num_slots, init_vitality)
+        , f' = Array.array (num_slots, %CI)
+        , v' = Array.array (num_slots, init_vitality)
+        }
 
   fun copy_board (B {f, v, f', v'}) =
       B { f = Util.copyArray f, v = Util.copyArray v,
