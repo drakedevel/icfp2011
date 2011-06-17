@@ -10,7 +10,7 @@ struct
   fun to_int s = valOf (Int.fromString s)
 
   fun to_card "I\n" = L.CI
-    | to_card "zero\n" = (L.% (L.CVal 0))
+    | to_card "zero\n" = L.CZero
     | to_card "succ\n" = L.CSucc
     | to_card "dbl\n" = L.CDbl
     | to_card "get\n" = L.CGet
@@ -27,7 +27,7 @@ struct
     | to_card x = raise Fail ("Invalid input card name " ^ x)
 
   fun from_card L.CI = "I\n"
-    | from_card (L.% (L.CVal 0)) = "zero\n"
+    | from_card L.CZero = "zero\n"
     | from_card L.CSucc = "succ\n"
     | from_card L.CDbl = "dbl\n"
     | from_card L.CGet = "get\n"
@@ -41,7 +41,6 @@ struct
     | from_card L.CCopy = "copy\n"
     | from_card L.CRevive = "revive\n"
     | from_card L.CZombie = "zombie\n"
-    | from_card _ = raise Fail "Invalid output card type."
 
   fun to_dir "1\n" = L.LeftApp
     | to_dir "2\n" = L.RightApp
@@ -52,17 +51,17 @@ struct
 
   fun from_int i = (Int.toString i) ^ "\n"
 
-  fun get_move () : E.move = let
+  fun get_move () = let
       val dir = to_dir (read ())
       val a_str = read ()
       val b_str = read ()
-  in E.move (to_dir dir_str)
+  in
       case dir of
-	  L.LeftApp => {dir = dir, card = to_card a_str, slot = to_int b_str}
-	| L.RightApp => {dir = dir, card = to_card b_str, slot = to_int a_str}
+	  L.LeftApp => E.move dir (to_card a_str) (to_int b_str)
+	| L.RightApp => E.move dir (to_card b_str) (to_int a_str)
   end
 
-  fun put_move {dir,card,slot} = let
+  fun put_move (dir,card,slot) = let
       val dir_str = from_dir dir
       val card_str = from_card card
       val slot_str = from_int slot

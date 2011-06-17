@@ -12,7 +12,7 @@ struct
 
   fun randCard () = case (Random.randRange (0,14) rand) of
 			0 => CI
-		      | 1 => (L.% (L.CVal 0))
+		      | 1 => CZero
 		      | 2 => CSucc
 		      | 3 => CDbl
 		      | 4 => CGet
@@ -35,24 +35,25 @@ struct
       val dir = randDir ()
       val card = randCard ()
       val slot = randSlot ()
-      val res = run_move b dir card slot
+      val mv = move dir card slot
+      val res = run_move b mv
   in
       case res of
-	  SOME _ => (b, {dir = dir, card = card, slot = slot})
+	  SOME _ => (b, mv)
 	| NONE => randMove b'
   end
 
   local
       fun proponent b = let
-	  val (b', move) = randMove b
+	  val (b', mv) = randMove b
       in
-	  ReaderWriter.put_move move; opponent b'
+	  ReaderWriter.put_move mv; opponent b'
       end
 
       and opponent b = let
-	  val {dir,card,slot} = ReaderWriter.get_move ()
+	  val mv = ReaderWriter.get_move ()
       in
-	  run_move b dir card slot; proponent b
+	  run_move b mv; proponent b
       end
   in
       fun main (name, args) = case args of
