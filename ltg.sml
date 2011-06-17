@@ -32,7 +32,21 @@ struct
   val num_slots = 256
   val init_vitality = 10000
 
-  fun show_card _ = "SomeCard"
+  fun show_card CI = "I"
+    | show_card CSucc = "Succ"
+    | show_card CDbl = "Dbl"
+    | show_card CGet = "Get"
+    | show_card CPut = "Put"
+    | show_card CS = "S"
+    | show_card CK = "K"
+    | show_card CInc = "Inc"
+    | show_card CDec = "Dec"
+    | show_card CAttack = "Attack"
+    | show_card CHelp = "Help"
+    | show_card CCopy = "Copy"
+    | show_card CRevive = "Revive"
+    | show_card CZombie = "Zombie"
+    | show_card (CVar v) = "Var -"
 
   fun build_board () =
       B { f = Array.array (num_slots, %CI)
