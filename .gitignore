@@ -6,4 +6,5 @@ sources-mlton.cm
 bin/ltg.x86-linux
 bin/ltg.x86-darwin
 bin/mlton-ltg
+bin/ltg.linux64
 sources.mlb
