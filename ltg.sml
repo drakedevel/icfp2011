@@ -1,6 +1,6 @@
 structure LTG =
 struct
-  datatype card =
+  datatype card = 
            CI
          (* | CZero *) (* Zero is just CVal 0 *)
          | CSucc
