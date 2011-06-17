@@ -16,7 +16,7 @@ evaluating that gives (K F e2) (e1 e2) -> F (e1 e2)
 addendum: encoding numbers is trivial.
 transforming F into F x for a value x, is harder.
 
-shift (CVal x) = shift encode
+shift (CVal x) = shift (encode x)
 encode 0 = CZero
 encode x | odd x  = succ (encode (x-1))
          | even x = dbl (encode (x div 2))

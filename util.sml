@@ -48,6 +48,8 @@ struct
   fun even x = x mod 2 = 0
   val odd = not o even
 
+  fun minBy f x y = case Int.compare (f x, f y) of GREATER => y | _ => x
+
   (* TODO: make this tail-recursive *)
   fun intersperse _ [] = []
     | intersperse _ [x] = [x]

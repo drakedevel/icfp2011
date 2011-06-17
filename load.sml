@@ -1,6 +1,6 @@
-local 
+local
     open Util infixr 0 $
-    open LTG
+    open LTG infix &
     structure E = Evaluator
     type move = E.move
     val move = E.move
@@ -12,7 +12,8 @@ in
   sig
     exception OOM
     type allocr                   (* allocator *)
-    val mkEmpty : unit -> allocr
+    val new : unit -> allocr
+    val copy : allocr -> allocr
     val alloc : allocr -> slotno
     (* raises OOM /before/ allocating anything if would overflow. *)
     val allocMany : allocr -> int -> slotno list
@@ -26,12 +27,13 @@ in
     exception OOM
     type allocr = slotno list ref (* free list *)
 
-    fun mkEmpty () = ref (upto (max_slot+1))
+    fun new () = ref (upto (max_slot+1))
+    fun copy (ref xs) = ref xs
 
     fun alloc (ref []) = raise OOM
       | alloc (R as ref (x::xs)) = (R := xs; x)
 
-    fun allocMany (R as ref xs) n = 
+    fun allocMany (R as ref xs) n =
         (R := List.drop (xs, n);
          List.take (xs, n))
         handle Subscript => raise OOM
@@ -44,44 +46,92 @@ in
         end
   end
 
+  (* these are dumb loader functions.
+   * they assume our opponent never interacts with us.
+   *)
+
   structure Load =
   struct
-  
-    (* converts a value to binary, _big-endian_ *)
-    fun toBinary (x : value) : bool list = 
+
+    (* converts an int to binary, big-endian  *)
+    fun toBinary (x : value) : bool list =
         let (* little-endian helper *)
             fun bin 0 = []
               | bin x = odd x :: bin (x div 2)
         in rev (bin x)
         end
 
-    (* these are dumb loader functions.
-     * they assume our opponent never interacts with us.
-     *)
+    (* Generates a list of "ops" to generate an int. An op is double or succ. *)
+    fun opsForInt n = intercalate [CDbl] $ map (fn true => [CSucc] | false => []) $ toBinary n
+    val numOpsForInt = length o opsForInt (* FIXME don't need to construct list *)
 
-    fun int (dest : slotno) (v : value) : move list =
-        [ L CPut dest
-        , R dest CZero ] @
-        intercalate
-            [ L CDbl dest ]
-            (map (fn true => [ L CSucc dest ] | false => [])
-                 (toBinary v))
-    (*basically the same as above, but as only one function, and returning 
+    (* generates a sequence of moves to store v into dest *)
+    fun intNoPut dest v = R dest CZero :: map (fn c => L c dest) (opsForInt v)
+    fun int (dest : slotno) (v : value) : move list = L CPut dest :: intNoPut dest v
+
+    (* basically the same as above, but as only one function, and returning
      * the comb that computes the value, rather than the move list, since the
      * comb needs to be shifted into place.  NOTE: %CZero, rather than %%CZero
-     * this is what we want, since we want to generate a card in the end
+     * this is what we want, since we want to generate a card in the end.
      *)
-   fun encode 0 : comb = %CZero
-     | encode x = if odd x then
-                      CApp (%CSucc, encode (x-1)) 
-                  else 
-                      CApp (%CDbl, encode (x div 2))
+    fun encode n : comb =
+        foldl (fn (card, exp) => CApp (%card, exp)) (%CZero) (opsForInt n)
 
-   (*if f!d == F, then run_moves (shift d E) will leave (f!d) == CApp(F,E)*)
-   fun shift (dest : slotno) (CApp (e1,e2)) =
-       [L CK dest, L CS dest] @ shift dest e1 @ shift dest e2
-     | shift (dest : slotno) (%c) = [R dest c]
-     | shift (dest : slotno) (CVal n) = shift dest (encode n)
+     (*if f!d == F, then run_moves (shift d E) will leave (f!d) == CApp(F,E)*)
+     fun shift (dest : slotno) (CApp (e1,e2)) =
+         [L CK dest, L CS dest] @ shift dest e1 @ shift dest e2
+       | shift (dest : slotno) (%c) = [R dest c]
+       | shift (dest : slotno) (CVal n) = shift dest (encode n)
+
+     (* checks if an expr is valid to load *)
+     fun checkExpr (% c) = ()
+       | checkExpr (CVal v) = ()
+       | checkExpr (CApp (e1, e2)) = (checkExpr e1; checkExpr e2)
+       | checkExpr (e1 & e2) = raise Fail "invalid expr to load; contains &"
+       | checkExpr (CVar _) = raise Fail "invalid expr to load; contains variable"
+
+     (* shift (encode x) takes 1 + 3 * (# ops to apply)
+      * where an op is double or succ
+      *
+      * loading n into a slot takes 2 + #ops (+1 to put, +1 to zero)
+      *
+      * so loading n into slot i and then shift (get i) takes:
+      *)
+     fun shiftInt (A : Allocator.allocr) dest n =
+         (* FIXME: can determine the shorter without generating both lists *)
+         let val shiftEncode = shift dest (encode n)
+             val tempShift = Allocator.withSlot A
+                             (fn i => int i n @
+                                      shift dest (CApp (%CGet, encode i)))
+         in minBy length shiftEncode tempShift
+         end
+
+     (* A fast, constant-space loader.
+      *
+      * Loads a combinator using a modified version of sully's algorithm. Allocates temporary slots
+      * to build numbers when building them via shift would take longer than building them in a temp
+      * and loading it.
+      *)
+     fun load (A : Allocator.allocr) (dest : slotno) (expr : comb) : move list =
+         let val () = checkExpr expr
+             fun left x = L x dest
+             val right = R dest
+             (* right-applies a number into dest, using temps if necessary *)
+
+             (* right-applies an expression into dest *)
+             fun shift (% c) = [right c]
+               | shift (CApp (e1, e2)) = [left CK, left CS] @ shift e1 @ shift e2
+               | shift (CVal v) = shiftInt A dest v
+
+             (* loads an expression into dest, assuming dest contains I. *)
+             fun load (% c) = [right c]
+               | load (CApp (%c, e)) = load e @ [left c]  (* optimization *)
+               | load (CApp (e, %c)) = load e @ [right c] (* optimization *)
+               | load (CApp (e1, e2)) = load e1 @ shift e2
+               | load (CVal v) = intNoPut dest v
+         in left CPut (* load I into dest *) :: load expr
+         end
+
   end
 
 end
