@@ -7,15 +7,15 @@ MLTON = mlton -default-ann "redundantMatch warn" -default-ann "sequenceNonUnit w
 tests:
 	echo 'CM.make "sources.cm"' | sml
 
-bin/ltg: FORCE
+bin/ltg.x86-linux:  *.sml
 	echo 'use "bin/compile-ltg.sml";' | sml
-ltg: bin/ltg
+ltg: bin/ltg.x86-linux
 
-bin/mlton-ltg-bin: sources.mlb FORCE
+bin/mlton-ltg-bin: sources.mlb *.sml
 	$(MLTON) bin/mlton-ltg-bin sources.mlb
 mlton-ltg: bin/mlton-ltg-bin
 
-sources.mlb: sources.cm cm2mlb/cm2mlb.x86-linux
+sources.mlb: sources.cm cm2mlb/cm2mlb.x86-linux *.sml
 	${RM} sources.mlb
 	cp sources.cm sources-mlton.cm
 	echo "go.sml" >> sources-mlton.cm

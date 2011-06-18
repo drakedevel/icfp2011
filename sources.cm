@@ -17,9 +17,11 @@ Group is
         union-find.sml
         util.sml
         int-map.sml
+	job.sml
 
         readerwriter.sml
         top.sml
         load.sml
-		terms.sml
+	terms.sml
+	queue.sml
         monad.sml
