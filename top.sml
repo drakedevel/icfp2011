@@ -28,7 +28,7 @@ struct
       SOME _ => (b, mv)
     | NONE => randMove b'
   end
-
+(*
   local
       fun proponent b = let
           val (b', mv) = randMove b
@@ -93,7 +93,35 @@ struct
                 | _ => raise Fail "what do you want from me?"
                   (*handle _ => OS.Process.success*)
   end
+*)
 
+  (* Let's fire off a job... *)
+  fun addNoobing () = ignore (Job.schedule [ R 0 CI ] Job.RForever)
+  val _ = Job.schedule (Terms.load' Terms.repeat_kill) (Job.ROnce addNoobing)
 
-  val main = noob_main
+  local
+      val b = build_board ()
+
+      fun proponent () = let
+          val mv = Job.get_move ()
+        in
+          ReaderWriter.put_move mv;
+          run_move b mv;
+          opponent ()
+        end
+      and opponent () = let
+          val mv = ReaderWriter.get_move ()
+        in
+          run_move b mv;
+          proponent ()
+        end
+  in
+      fun main (name, args) = case args of
+             ["0"] => proponent ()
+           | ["1"] => opponent ()
+           | _ => raise Fail "what do you want from me?!"
+  end
+
+  (*val main = noob_main
+*)
 end
