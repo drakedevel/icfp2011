@@ -1,0 +1,3 @@
+zombocom ourDead theirDead benignCommand dickingCommand
+
+noobY (\f . zombie (255 - theirDead) (\z -> (\z' -> zombie (255 - ourDead) (\z'' -> (\z''' -> f f) ((get benignCommand) z''))) ((copy dickingCommand) z)))
