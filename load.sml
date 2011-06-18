@@ -26,29 +26,36 @@ in
    * slots we are otherwising using *)
   structure Allocator : ALLOCATOR =
   struct
-    (* TODO: always use lowest available slot *)
-    exception OOM
-    type allocr = slotno list ref (* free list *)
+    structure IM = IntMap (* sets don't have firsti; argh. *)
 
-    fun new () = ref (upto (max_slot+1))
+    exception OOM
+    type allocr = unit IM.map ref (* free list *)
+
+    fun add S x = IM.bind S x ()
+
+    fun new () = ref $ foldl (fn (i, S) => add S i) IM.empty $ upto (max_slot+1)
     fun copy (ref xs) = ref xs
 
-    fun alloc (ref []) = raise OOM
-      | alloc (R as ref (x::xs)) = (R := xs; x)
+    fun alloc (R as ref S) =
+        case IM.firsti S of
+            NONE => raise OOM
+          | SOME (x, ()) => (R := IM.delete S x; x)
 
-    fun allocMany (R as ref xs) n =
-        (R := List.drop (xs, n);
-         List.take (xs, n))
-        handle Subscript => raise OOM
+    fun allocMany (R as ref S) n =
+        let fun take 0 = []
+              | take n = alloc R :: take (n-1)
+        in if IM.count S < n then raise OOM
+           else take n
+        end
 
-    fun free (R as ref xs) x = R := x::xs
+    fun free (R as ref S) x = R := add S x
 
     fun withSlot a f =
         let val s = alloc a
         in after f (free a) s
         end
 
-    fun use a x = a := List.filter (fn y => x<>y) (!a)
+    fun use a x = a := IM.delete (!a) x
   end
 
   (* these are dumb loader functions.

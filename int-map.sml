@@ -320,7 +320,3 @@ struct
         | SOME w =>(Word.fromInt w)+0w1 (* 0wx40000000 in sml/nj... *)
   fun wordify x = Word.fromInt x + imax
 end
-
-(* Then you can do... *)
-structure WordMap = WordMapFn(WordWordable)
-structure IntMap = WordMapFn(IntWordable)

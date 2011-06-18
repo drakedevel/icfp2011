@@ -126,6 +126,8 @@ struct
       let val (my_diff, their_diff) = diff_boards old_board new_board
       in (my_diff, their_diff) end
 
+  val allocator = Allocator.new ()
+
   fun logic info = ()
 
   (* Let's fire off a job... *)
