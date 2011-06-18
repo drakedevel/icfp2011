@@ -123,6 +123,9 @@ struct
              ["0"] => proponent (build_board ()) (build_board ())
            | ["1"] => opponent (build_board ())
            | _ => raise Fail "Incorrect arguments"
+      fun main' args = main args
+          handle e => (Print.esay ("Unhandled exception: " ^ exnMessage e);
+                       OS.Process.failure)
   end
 
 end

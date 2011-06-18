@@ -1,2 +1,2 @@
 CM.make "sources.cm";
-SMLofNJ.exportFn ("bin/ltg", Top.main);
+SMLofNJ.exportFn ("bin/ltg", Top.main');
