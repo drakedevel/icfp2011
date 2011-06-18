@@ -1,6 +1,8 @@
 .cm
 .*.swp
 *~
+leaderboard/leaderboard.html
+*.pyc
 cm2mlb/cm2mlb.x86-linux
 sources-mlton.cm
 bin/ltg.x86-linux
