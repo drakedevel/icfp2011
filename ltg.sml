@@ -59,6 +59,12 @@ struct
     | show_card CRevive = "revive"
     | show_card CZombie = "zombie"
 
+  fun show_comb (CVal v) = Int.toString v
+    | show_comb (CVar v) = "x"
+    | show_comb (CApp (a,b)) = (show_comb a) ^ "(" ^ (show_comb b) ^ ")"
+    | show_comb (% c) = show_card c
+    | show_comb (op & (a, b)) = (show_comb a) ^ "(" ^ (show_comb b) ^ ")"
+
   fun build_board () =
       B { f = Array.array (num_slots, %CI)
         , v = Array.array (num_slots, init_vitality)
@@ -72,4 +78,40 @@ struct
 
   fun %% CZero = CVal 0
     | %% x = % x
+
+  val card_to_int =
+   fn CI      => 0
+    | CZero   => 1
+    | CSucc   => 2
+    | CDbl    => 3
+    | CGet    => 4
+    | CPut    => 5
+    | CS      => 6
+    | CK      => 7
+    | CInc    => 8
+    | CDec    => 9
+    | CAttack => 10
+    | CHelp   => 11
+    | CCopy   => 12
+    | CRevive => 13
+    | CZombie => 14
+
+  val int_to_card =
+   fn 0 => CI
+    | 1 => CZero
+    | 2 => CSucc
+    | 3 => CDbl
+    | 4 => CGet
+    | 5 => CPut
+    | 6 => CS
+    | 7 => CK
+    | 8 => CInc
+    | 9 => CDec
+    | 10 => CAttack
+    | 11 => CHelp
+    | 12 => CCopy
+    | 13 => CRevive
+    | 14 => CZombie
+    | _ => raise Fail "wtf"
+      
 end
