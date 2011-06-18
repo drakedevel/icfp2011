@@ -55,7 +55,7 @@ in
         in after f (free a) s
         end
 
-    fun use a x = a := List.filter (fn y => x<>y) (!a)
+    fun use a x = a := IM.delete (!a) x
   end
 
   (* these are dumb loader functions.
