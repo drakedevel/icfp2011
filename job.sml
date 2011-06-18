@@ -1,56 +1,61 @@
 signature JOB = sig
 
+  type move = Evaluator.move
   type job
 
-  datatype repeat = ROnce | RForever
+  datatype repeat = ROnce of unit -> unit | RForever
 
   val schedule : move list -> repeat -> job
   val suspend : job -> unit
   val resume : job -> unit
 
-  val getMove : unit -> move
+  val get_move : unit -> move
 end
 
 structure Job : JOB = struct
-  datatype repeat = ROnce | RForever
+  type move = Evaluator.move
+  datatype repeat = ROnce of unit -> unit | RForever
+  datatype state = IN | DEAD | OUT
+
   type job = { repeat : repeat,
                    moves : move list,
                    cur : move list ref,
-                   enabled : bool ref }
+                   state : state ref }
 
-  val inStack = ref (nil: job list)
-  val outStack = ref (nil: job list)
+  val jobs : job Queue.queue = Queue.queue ()
 
   fun schedule moves repeat = let
       val info = { repeat = repeat,
                    moves = moves,
                    cur = ref moves,
-                   enabled = ref true }
+                   state = ref IN }
     in
-      inStack := (info :: !inStack);
+      Queue.insert (jobs, info);
       info
     end
 
-  fun suspend (j: job) = (#enabled j := true)
-  fun resume (j: job) = (#enabled j := true)
-
-  fun reschedule () = (
-    case !outStack of nil => raise Fail "no moves"
-                      | moves => (outStack := nil; inStack := moves)
+  fun suspend (j: job) = (#state j := DEAD)
+  fun resume (j: job) = (
+    case !(#state j) of
+      IN => ()
+    | DEAD => (#state j := IN)
+    | OUT => (#state j := IN; Queue.insert (jobs, j))
   )
 
-  fun runJob (j as { repeat, moves, cur, enabled }) = hd (!cur)
-    before (
-      cur := tl (!cur);
-      case (!cur, repeat) of
-        (nil, ROnce) => ()
-      | (nil, RForever) => (outStack := j::(!outStack); cur := moves)
-      | (_, _) => (outStack := j::(!outStack))
-    )
-
-  fun getMove () = (case !inStack of
-      nil => (reschedule(); getMove())
-    | (m::ms) => (inStack := ms; outStack := m::(!outStack); runJob m)
-  )
+  fun get_move () = let
+      val j as { repeat, moves, cur, state } = Queue.remove jobs
+    in
+      case !state of DEAD => (state := OUT; get_move ())
+      | _ => (
+        hd (!cur)
+        before (
+          cur := tl (!cur);
+          case (!cur, repeat) of
+            (nil, ROnce f) => f ()
+          | (nil, RForever) => (Queue.insert (jobs, j); cur := moves)
+          | (_, _) => (Queue.insert (jobs, j))
+        )
+      )
+    end
 
 end
