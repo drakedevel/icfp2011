@@ -43,6 +43,23 @@ struct
   val num_slots : slotno = 256
   val init_vitality : vitality = 10000
 
+  fun from_cardno 0 = CI
+    | from_cardno 1 = CZero
+    | from_cardno 2 = CSucc
+    | from_cardno 3 = CDbl
+    | from_cardno 4 = CGet
+    | from_cardno 5 = CPut
+    | from_cardno 6 = CS
+    | from_cardno 7 = CK
+    | from_cardno 8 = CInc
+    | from_cardno 9 = CDec
+    | from_cardno 10 = CAttack
+    | from_cardno 11 = CHelp
+    | from_cardno 12 = CCopy
+    | from_cardno 13 = CRevive
+    | from_cardno 14 = CZombie
+    | from_cardno _ = raise Fail "wtf"
+
   fun show_card CI = "I"
     | show_card CZero = "zero"
     | show_card CSucc = "succ"
@@ -58,6 +75,12 @@ struct
     | show_card CCopy = "copy"
     | show_card CRevive = "revive"
     | show_card CZombie = "zombie"
+
+  fun show_comb (CVal v) = Int.toString v
+    | show_comb (CVar v) = "x"
+    | show_comb (CApp (a,b)) = (show_comb a) ^ "(" ^ (show_comb b) ^ ")"
+    | show_comb (% c) = show_card c
+    | show_comb (op & (a, b)) = (show_comb a) ^ "(" ^ (show_comb b) ^ ")"
 
   fun build_board () =
       B { f = Array.array (num_slots, %CI)

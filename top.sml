@@ -12,23 +12,7 @@ struct
              | 1 => RightApp
              | _ => raise Fail "wtf"
 
-  fun randCard () = case (Random.randRange (0,14) rand) of
-            0 => CI
-              | 1 => CZero
-              | 2 => CSucc
-              | 3 => CDbl
-              | 4 => CGet
-              | 5 => CPut
-              | 6 => CS
-              | 7 => CK
-              | 8 => CInc
-              | 9 => CDec
-              | 10 => CAttack
-              | 11 => CHelp
-              | 12 => CCopy
-              | 13 => CRevive
-              | 14 => CZombie
-              | _ => raise Fail "wtf"
+  fun randCard () = from_cardno (Random.randRange (0,14) rand)
 
   fun randSlot () = Random.randRange (0,255) rand
 
