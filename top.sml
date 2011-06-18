@@ -53,7 +53,6 @@ struct
           val copy_back = %CGet ? CVal 1
       in Load.load alloc 1 payload @ Load.load alloc 0 copy_back end
 
-(*
   local
       fun proponent b = let
           val (b', mv) = randMove b
@@ -65,13 +64,12 @@ struct
           val _ = run_move b mv
       in proponent b end
   in
-      fun main (name, args) = case args of
+      fun random_main (name, args) = case args of
                   ["0"] => proponent (build_board ())
                 | ["1"] => opponent (build_board ())
                 | _ => raise Fail "what do you want from me?"
                   (*handle _ => OS.Process.success*)
   end
-*)
 
   local
       val xbox_moves = xbox ()
@@ -85,10 +83,12 @@ struct
           val mv = ReaderWriter.get_move ()
       in proponent mvs end
   in
-      fun main (name, args) = case args of
+      fun xbox_main (name, args) = case args of
                   ["0"] => proponent []
                 | ["1"] => opponent []
                 | _ => raise Fail "what do you want from me?"
                   (*handle _ => OS.Process.success*)
   end
+
+  val main = xbox_main
 end
