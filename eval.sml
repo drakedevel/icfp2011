@@ -14,8 +14,7 @@ sig
    *)
   val eval : LTG.board -> LTG.comb -> bool -> LTG.comb option
 
-  val diff_boards : LTG.board -> LTG.board -> (LTG.vitality array * LTG.vitality
-  array)
+  val diff_boards : LTG.board -> LTG.board -> (LTG.vitality IntMap.map * LTG.vitality IntMap.map)
 
   val expr_size : LTG.comb -> int
 
@@ -40,10 +39,10 @@ struct
 
   open LTG
   infix &
-  val ! = Array.sub
-  infix 9 !
-  fun sub x y = Array.sub (x, y)
-  fun up x y z = Array.update (x, y, z)
+  fun !! (x,y) = valOf $ IntMap.find (!x,y)
+  infix 9 !!
+  fun sub x y = valOf $ IntMap.find (!x, y)
+  fun up x y z = x := IntMap.insert (!x, y, z)
 
   val fuck_it_threshold = 100
 
@@ -88,36 +87,36 @@ struct
              | %CS & x & y & z => CApp (CApp (x, z), CApp (y, z))
              | %CK & x & _ => x
              | %CInc & e => num 
-                           (fn i => let val n = v ! i
+                           (fn i => let val n = v !! i
                                         val () = if is_dead n then ()
                                                  else up v i $ clamp $ n++1
                                     in %CI end) e
              | %CDec & e => num
-                           (fn i => let val n = v ! (max_slot-i)
+                           (fn i => let val n = v !! (max_slot-i)
                                         val () = if is_dead n then ()
                                                  else up v (max_slot-i) $ clamp (n--1)
                                     in %CI end) e
              (* attack and help have a bunch of corner cases. *)
              | %CAttack & CVal i & arse & CVal n =>
-               let val () = if v ! i < n then raise TooBig else
-                            up v i $ (v ! i) - n
+               let val () = if v !! i < n then raise TooBig else
+                            up v i $ (v !! i) - n
                    val j = num id arse
-                   val () = if is_dead $ v' ! j  then () else
-                            up v' j $ clamp $ v' ! j -- (n * 9 div 10)
+                   val () = if is_dead $ v' !! j  then () else
+                            up v' j $ clamp $ v' !! j -- (n * 9 div 10)
                in %CI end
              | %CAttack & _ & _ & _ => raise Stuck
              | %CHelp & CVal i & arse & CVal n =>
-               let val () = if v ! i < n then raise TooBig else
-                            up v i $ (v ! i) - n
+               let val () = if v !! i < n then raise TooBig else
+                            up v i $ (v !! i) - n
                    val j = num id arse
-                   val () = if is_dead $ v' ! j then () else
-                            up v' j $ clamp $ v' ! j ++ (n * 11 div 10)
+                   val () = if is_dead $ v' !! j then () else
+                            up v' j $ clamp $ v' !! j ++ (n * 11 div 10)
                in %CI end
              | %CHelp & _ & _ & _ => raise Stuck
              | %CCopy & e => num (sub f') e
-             | %CRevive & e => num (fn i => (if is_dead (v ! i) then up v i 1 else (); %CI)) e
+             | %CRevive & e => num (fn i => (if is_dead (v !! i) then up v i 1 else (); %CI)) e
              | %CZombie & CVal i & x =>
-               (if is_dead $ v' ! (max_slot-i) then () else raise NotDead;
+               (if is_dead $ v' !! (max_slot-i) then () else raise NotDead;
                 up f' (num_slots - 1 - i) x;
                 up v' (num_slots - 1 - i) ~1;
                 %CI)
@@ -136,12 +135,10 @@ struct
      handle _ => NONE end
 
   fun diff_boards (old as B{v=v1,v'=v1',...}) (new as B{v=v2,v'=v2',...}) =
-    let val (mine, theirs) = (Util.copyArray v1, Util.copyArray v1')
-        fun diff (i, vitality) = vitality - v1 ! i
-        val () = Array.modifyi diff mine
-        val () = Array.modifyi diff theirs
+    let val (mine, theirs) = (v1, v1')
+        fun diff (i, vitality) = vitality - v1 !! i
     in
-        (mine, theirs)
+        (IntMap.mapi diff (!mine), IntMap.mapi diff (!theirs))
     end
 
   fun expr_size e =
@@ -160,16 +157,16 @@ struct
   (* To be run before a turn. Runs all of the zombies *)
   fun run_zombies (board as B{f,v,...}) =
       let fun handle_zombie (i, ~1) =
-              (ignore $ eval board (CApp (f ! i, %CI)) true;
+              (ignore $ eval board (CApp (f !! i, %CI)) true;
                up f i $ %CI;
                0)
             | handle_zombie (_, n) = n
-      in Array.modifyi handle_zombie v end
+      in v := IntMap.mapi handle_zombie (!v) end
 
   fun play_card (board as B{f,v,...}) (direction, card, slot_num) =
-      let val slot = f ! slot_num
+      let val slot = f !! slot_num
           val result =
-              if is_dead $ v ! slot_num then NONE else
+              if is_dead $ v !! slot_num then NONE else
               (eval board (case direction of
                                         LeftApp => CApp (%% card, slot)
                                       | RightApp => CApp (slot, %% card)) false)
