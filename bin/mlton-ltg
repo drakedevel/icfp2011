@@ -1,0 +1,2 @@
+#!/bin/sh
+"$0"-bin @MLton fixed-heap 500M -- "$@"

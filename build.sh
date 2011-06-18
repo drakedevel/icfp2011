@@ -10,6 +10,7 @@ _EOF
 chmod +x ${TEMP}/install
 
 cp -a bin/mlton-ltg ${TEMP}/run
+cp -a bin/mlton-ltg-bin ${TEMP}/run-bin
 
 OLDDIR="$(readlink -f "$(dirname $0)")"
 cd ${TEMP}
