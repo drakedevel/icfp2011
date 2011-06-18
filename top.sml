@@ -99,27 +99,30 @@ struct
   fun addNoobing () = ignore (Job.schedule [ R 0 CI ] Job.RForever)
   val _ = Job.schedule (Terms.load' Terms.repeat_kill) (Job.ROnce addNoobing)
 
+  fun logic old_board new_board =
+      let val (my_diff, their_diff) = Evaluator.diff_boards old_board new_board
+      in () end
+
   local
-      fun proponent b = let
+      fun proponent b_old b = let
           val mv = Job.get_move ()
-        in
+      in
           ReaderWriter.put_move mv;
           run_move b mv;
           opponent (switch_teams b)
-        end
+      end
       and opponent b = let
           val mv = ReaderWriter.get_move ()
-        in
+          val b' = copy_board b
+      in
           run_move b mv;
-          proponent (switch_teams b)
-        end
+          proponent (switch_teams b') (switch_teams b)
+      end
   in
       fun main (name, args) = case args of
-             ["0"] => proponent (build_board ())
+             ["0"] => proponent (build_board ()) (build_board ())
            | ["1"] => opponent (build_board ())
-           | _ => raise Fail "what do you want from me?!"
+           | _ => raise Fail "Incorrect arguments"
   end
 
-  (*val main = noob_main
-*)
 end
