@@ -139,8 +139,9 @@ struct
 
   fun run_move (board as B{f,v,...}) (direction, card, slot_num) =
       let val slot = f ! slot_num
-          val () = if is_dead $ v ! slot_num then raise Dead else ()
-          val result = (eval board (case direction of
+          val result =
+              if is_dead $ v ! slot_num then NONE else
+              (eval board (case direction of
                                         LeftApp => CApp (%% card, slot)
                                       | RightApp => CApp (slot, %% card)) false)
           val () = up f slot_num $ getOpt (result, %CI)
