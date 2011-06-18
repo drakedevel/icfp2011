@@ -45,7 +45,7 @@ in
 
   fun dec_n n = %CDec ? EVal n
 
-  val repeat_kill = repeat $ thunk $ seqL [dec_n 0, dec_n 1, dec_n 2]
+  val repeat_kill = repeat_lam ? thunk (seqL [dec_n 0, dec_n 1, dec_n 2])
 
   val ski = Compile.convertExpr
   fun load e = Load.load (Allocator.new ()) 0 e
