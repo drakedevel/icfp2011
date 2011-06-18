@@ -26,7 +26,7 @@ cm2mlb/cm2mlb.x86-linux:
 
 tar: ltg.tar.gz
 
-ltg.tar.gz: bin/mlton-ltg
+ltg.tar.gz: bin/mlton-ltg-bin bin/mlton-ltg
 	./build.sh $@
 
 FORCE: 
