@@ -11,6 +11,7 @@ struct
   fun is_alive v = v > 0
   val is_dead = not o is_alive
   fun is_valid_slot n = n >= 0 andalso n <= max_slot
+  infix &
 
   datatype card = 
            CI
@@ -61,10 +62,17 @@ struct
     | show_card CZombie = "zombie"
 
   fun show_comb (CVal v) = Int.toString v
-    | show_comb (CVar v) = "x"
-    | show_comb (CApp (a,b)) = (show_comb a) ^ "(" ^ (show_comb b) ^ ")"
+    | show_comb (CVar v) = Variable.name v
     | show_comb (% c) = show_card c
-    | show_comb (op & (a, b)) = (show_comb a) ^ "(" ^ (show_comb b) ^ ")"
+    | show_comb (f & x) = show_comb (CApp (f,x))
+    | show_comb (CApp (f,x)) = let val xs = show_comb_arg x
+                               in show_comb f ^
+                                  (if size xs > 1 andalso String.sub (xs, 0) <> #"("
+                                   then " " ^ xs else xs)
+                               end
+  and show_comb_arg (f & x) = show_comb_arg (CApp (f,x))
+    | show_comb_arg (e as CApp (f,x)) = "(" ^ show_comb e ^ ")"
+    | show_comb_arg e = show_comb e
 
   fun build_board () = let
       val b = B {f = ref BoardMap.empty, v = ref BoardMap.empty, f' = ref BoardMap.empty, v' = ref BoardMap.empty}

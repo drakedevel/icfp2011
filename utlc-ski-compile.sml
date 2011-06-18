@@ -15,68 +15,78 @@ struct
 
   local
     open LTG
+    open Util
     infix CApp
     infix &
   in
 
-    type card_purity = bool * int (* purity, arity *)
-
-    fun card_purity CI = (true, 1)
-      | card_purity CZero = (true, 0)
-      | card_purity CSucc = (true, 1)
-      | card_purity CDbl = (true, 1)
-      | card_purity CGet = (false, 1)
-      | card_purity CPut = (true, 2)
-      | card_purity CS = (true, 3)
-      | card_purity CK = (true, 2)
-      | card_purity CInc = (false, 1)
-      | card_purity CDec = (false, 1)
-      | card_purity CAttack = (false, 3)
-      | card_purity CHelp = (false, 3)
-      | card_purity CCopy = (false, 1)
-      | card_purity CRevive = (false, 1)
-      | card_purity CZombie = (false, 2)
+    (* # args that can be applied without effects occuring. error is an effect. *)
+    fun card_pure_arity CI = 1
+      | card_pure_arity CZero = 0
+      | card_pure_arity CSucc = 1
+      | card_pure_arity CDbl = 1
+      | card_pure_arity CGet = 0
+      | card_pure_arity CPut = 2
+      | card_pure_arity CS = 2
+      | card_pure_arity CK = 2
+      | card_pure_arity CInc = 0
+      | card_pure_arity CDec = 0
+      | card_pure_arity CAttack = 2
+      | card_pure_arity CHelp = 2
+      | card_pure_arity CCopy = 0
+      | card_pure_arity CRevive = 0
+      | card_pure_arity CZombie = 1
 
     (* determines whether a card has effects when applied to its nth argument *)
-    fun is_partially_applied_card_pure c n =
-        let val (pure, arity) = card_purity c
-        in n < arity orelse (n = arity andalso pure)
-        end
+    fun is_partially_applied_card_pure c n = n <= card_pure_arity c
 
     (* if this returns true, the expression is guaranteed side-effect-free.
      * however, not guaranteed to return true if the expression is pure.
      *)
-    fun is_pure (f CApp x) = is_pure_func f andalso is_pure x
+    fun is_pure (%CS CApp f CApp g CApp x) = is_pure (f CApp x CApp (g CApp x))
+      | is_pure (f CApp x) = is_pure_func f andalso is_pure x
       | is_pure (% _) = true
       | is_pure (CVal _) = true
-      | is_pure (_ & _) = true
-      | is_pure (CVar _) = raise Fail "variables not allowed"
+      | is_pure (CVar _) = true
+      | is_pure (_ & _) = raise Fail "should never happen"
 
-    and is_pure_func (%CS & f & g) = is_pure_func f andalso is_pure_func g
-      (* application *)
-      | is_pure_func (f CApp x) = is_pure_func f andalso is_pure x andalso is_pure_func (f & x)
+    and is_pure_func (%CI CApp f) = is_pure_func f
+      | is_pure_func (%CK CApp f CApp _) = is_pure_func f
       (* partial card application for cards not specially checked *)
       | is_pure_func (% c) = is_partially_applied_card_pure c 1
-      | is_pure_func (%c & _) = is_partially_applied_card_pure c 2
-      | is_pure_func (%c & _ & _) = is_partially_applied_card_pure c 3
+      | is_pure_func (%c CApp _) = is_partially_applied_card_pure c 2
+      | is_pure_func (%c CApp _ CApp _) = is_partially_applied_card_pure c 3
       (* otherwise, assume not pure to be safe *)
       | is_pure_func _ = false
 
+    fun containsVar v (CVal _) = false
+      | containsVar v (CVar v') = Variable.equal (v, v')
+      | containsVar v (f CApp x) = containsVar v f orelse containsVar v x
+      | containsVar v (% c) = false
+
     fun peep (%CS CApp %CK CApp %_) = %CI
-      | peep (%CS CApp (%CK CApp %x) CApp %CI) = %x (* I have only tested this, not proven it correct *)
+      | peep (%CS CApp (%CK CApp %x) CApp %CI) = %x
       | peep (%CK CApp %CI) = %CPut
-      | peep (e as %CPut CApp exp) = if is_pure exp then %CI else e
+      | peep (e as %CPut CApp exp) = if is_pure exp
+                                     then (Log.log ("replacing pure " ^ show_comb e
+                                                    ^ " with " ^ show_comb (%CI));
+                                           %CI)
+                                     else e
       | peep (%CI CApp x) = x
       | peep x = x
+
   end
 
   local val % = L.% in
-    fun bracket' x (C as L.CVar y) =
-        if V.equal (x, y) then (% L.CI)
-        else (% L.CK) @ C
-      | bracket' x (L.CApp (C1, C2)) = peep (%L.CS @ bracket x C1) @ bracket x C2
-      | bracket' x C = (% L.CK) @ C
-    and bracket x C = peep (bracket' x C)
+    fun bracket' x c =
+        (* TODO running containsVar andalso is_pure at every level is unnecessary. *)
+        if not (containsVar x c) andalso is_pure c then %L.CK @ c else
+        case c
+         of L.CVar y => if V.equal (x, y) then (% L.CI)
+                        else (% L.CK) @ c
+          | L.CApp (C1, C2) => peep (%L.CS @ bracket x C1) @ bracket x C2
+          | _ => % L.CK @ c
+    and bracket x c = bracket' x c
   end
 
 (*
@@ -94,7 +104,7 @@ struct
   fun isIdempotent x (U.EVar y) = not (V.equal (x, y))
     | isIdempotent x (U.ELam (x', e)) = isIdempotent x e
     | isIdempotent x (U.EApp (U.% L.CK, e2)) = isIdempotent x e2
-    | isIdempotent x (U.EApp (U.EApp (U.% L.CS, e1), e2)) = 
+    | isIdempotent x (U.EApp (U.EApp (U.% L.CS, e1), e2)) =
       isIdempotent x e1 andalso isIdempotent x e2
     | isIdempotent x (U.EApp (U.% L.CS, e1)) = isIdempotent x e1
     | isIdempotent x (U.EApp _) = false
