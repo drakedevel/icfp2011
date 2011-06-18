@@ -29,6 +29,7 @@ struct
     and bracket x C = peep (bracket' x C)
   end
 
+(*
   fun isIdempotent x (U.EVar y) = not (V.equal (x, y))
     | isIdempotent x (U.EApp (e1, e2)) = (isIdempotent x e1) andalso (isIdempotent x e2)
     | isIdempotent x (U.ELam (x', e)) = isIdempotent x e
@@ -39,6 +40,16 @@ struct
     | isIdempotent x (U.% L.CK) = true
     | isIdempotent x (U.% L.CI) = true
     | isIdempotent x (U.% _) = false
+*)
+  fun isIdempotent x (U.EVar y) = not (V.equal (x, y))
+    | isIdempotent x (U.ELam (x', e)) = isIdempotent x e
+    | isIdempotent x (U.EApp (U.% L.CK, e2)) = isIdempotent x e2
+    | isIdempotent x (U.EApp (U.EApp (U.% L.CS, e1), e2)) = 
+      isIdempotent x e1 andalso isIdempotent x e2
+    | isIdempotent x (U.EApp (U.% L.CS, e1)) = isIdempotent x e1
+    | isIdempotent x (U.EApp _) = false
+    | isIdempotent _ _ = true
+
 
   (* This only matters if you have a function which infinitely and side-effect-free
      infinite loops when called with any input. *)

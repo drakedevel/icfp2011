@@ -3,7 +3,7 @@ struct
   open Util infixr 0 $
   open LTG
   open Evaluator
-  infix ?
+  infix 7 ?
   val (op ?) = CApp
   fun !! (x,y) = valOf $ IntMap.find (!x,y)
   infix 9 !!
@@ -131,6 +131,9 @@ struct
   fun logic info = ()
 
   (* Let's fire off a job... *)
+(*
+  fun fire () = ignore (Job.schedule [R 1 CGet, R 1 CZero, R 1 CZero] Job.RForever)
+
   val (tr,volcanic) = Terms.volcanic
   local 
       val once = Job.ROnce
@@ -152,10 +155,26 @@ struct
       ignore (Job.schedule [R 10 CGet, R 10 CZero, R 10 CZero] (once (fire3 (n-1))))
   end
   fun addNoobing () = ignore (Job.schedule [ R 0 CI ] Job.RForever)
-                      
-  (*val _ = Job.schedule (Terms.load' Terms.repeat_kill) (Job.ROnce addNoobing)*)
 
   val _  = Job.schedule (volcanic) (Job.ROnce (load 0 fire1))
+  *)                    
+  (*val _ = Job.schedule (Terms.load' Terms.repeat_kill) (Job.ROnce addNoobing)*)
+  (*val _  = Job.schedule (Terms.nyan_cat) (Job.ROnce fire)*)
+local
+  open UTLCNamed
+  val (op ?) = EApp
+
+in
+
+  fun addNoobing () = ignore (Job.schedule [ R 0 CSucc ] Job.RForever)
+  val asser = Terms.load' (Terms.repeat_lam_ctr ? Terms.zombie_helper 0 ? %CZero)
+  fun loader () = Job.schedule (asser) (Job.ROnce addNoobing)
+  fun initial_attack i = Terms.load' (%CAttack ? EVal i ? %CZero ? EVal 6000)
+  val _ = Job.schedule (initial_attack 5) 
+          (Job.ROnce (fn () => ignore $ Job.schedule (initial_attack 6) 
+                                      (Job.ROnce (ignore o loader))))
+
+end
 
   local
       fun proponent b_old b = let
