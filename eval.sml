@@ -137,7 +137,7 @@ struct
             | handle_zombie (_, n) = n
       in Array.modifyi handle_zombie v end
 
-  fun run_move (board as B{f,v,...}) (direction, card, slot_num) =
+  fun play_card (board as B{f,v,...}) (direction, card, slot_num) =
       let val slot = f ! slot_num
           val result =
               if is_dead $ v ! slot_num then NONE else
@@ -146,6 +146,8 @@ struct
                                       | RightApp => CApp (slot, %% card)) false)
           val () = up f slot_num $ getOpt (result, %CI)
       in result end
+
+  fun run_move board move = (run_zombies board; play_card board move)
 
   fun run_moves board moves = List.app (const () o run_move board) moves
 
