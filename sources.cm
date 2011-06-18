@@ -25,3 +25,4 @@ Group is
 	terms.sml
 	queue.sml
         monad.sml
+	data.sml
