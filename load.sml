@@ -5,6 +5,7 @@ sig
   val new : unit -> allocr
   val copy : allocr -> allocr
   val alloc : allocr -> LTG.slotno
+  val use : allocr -> LTG.slotno -> unit
   (* raises OOM /before/ allocating anything if would overflow. *)
   val allocMany : allocr -> int -> LTG.slotno list
   val free : allocr -> LTG.slotno -> unit
@@ -53,6 +54,8 @@ in
         let val s = alloc a
         in after f (free a) s
         end
+
+    fun use a x = a := List.filter (fn y => x<>y) (!a)
   end
 
   (* these are dumb loader functions.
