@@ -1,9 +1,12 @@
 structure Top =
 struct
+  open Util infixr 0 $
   open LTG
   open Evaluator
   infix ?
   val (op ?) = CApp
+  val ! = Array.sub
+  infix 9 !
 
   val rand = Random.rand (0x1337BABE, 0x1337D00D)
 
@@ -95,16 +98,46 @@ struct
   end
 *)
 
+  datatype state_change = SDied | SRevived | SNothing
+
+  fun diff_boards (old as B{v=v1,v'=v1',...}) (new as B{v=v2,v'=v2',...}) =
+    let val (mine, theirs) = (Util.copyArray v1, Util.copyArray v1')
+        fun diff (i, vitality) = vitality - v1 ! i
+        val () = Array.modifyi diff mine
+        val () = Array.modifyi diff theirs
+    in
+        (mine, theirs)
+    end
+
+  val fuck_it_threshold = 100
+  fun expr_size e =
+      let fun sz e n =
+              if n >= fuck_it_threshold then raise Fail "fuck it" else
+              case e of
+                  CVal _ => n+1
+                | CVar _ => n+1
+                | CApp (e1, e2) => sz e1 $ sz e2 (n+1)
+                | & (e1, e2) => sz e1 $ sz e2 (n+1)
+                | %c => n+1
+    in
+          SOME (sz e 0)
+          handle _ => NONE
+    end
+
+
+  fun get_board_info old_board new_board =
+      let val (my_diff, their_diff) = diff_boards old_board new_board
+      in (my_diff, their_diff) end
+
+  fun logic info = ()
+
   (* Let's fire off a job... *)
   fun addNoobing () = ignore (Job.schedule [ R 0 CI ] Job.RForever)
   val _ = Job.schedule (Terms.load' Terms.repeat_kill) (Job.ROnce addNoobing)
 
-  fun logic old_board new_board =
-      let val (my_diff, their_diff) = Evaluator.diff_boards old_board new_board
-      in () end
-
   local
       fun proponent b_old b = let
+          val () = logic (get_board_info b_old b)
           val mv = Job.get_move ()
       in
           ReaderWriter.put_move mv;
