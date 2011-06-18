@@ -73,17 +73,14 @@ struct
   end
 
   local
-      fun noob () =
-      let val alloc = Allocator.new ()
-          val payload = %CDec ? %CZero
-          val slot = randSlot ()
-      in Load.load alloc slot payload end
+      val setup = Terms.load' Terms.repeat_kill
+      val noobing = [ R 0 CI ]
 
       fun proponent b (mv::mvs) = let
           val _ = ReaderWriter.put_move mv
           val _ = run_move b mv
       in opponent b mvs end
-        | proponent b [] = proponent b (noob ())
+        | proponent b [] = proponent b noobing
 
       and opponent b mvs = let
           val mv = ReaderWriter.get_move ()
@@ -91,8 +88,8 @@ struct
       in proponent b mvs end
   in
       fun noob_main (name, args) = case args of
-                  ["0"] => proponent (build_board ()) []
-                | ["1"] => opponent (build_board ()) []
+                  ["0"] => proponent (build_board ()) setup
+                | ["1"] => opponent (build_board ()) setup
                 | _ => raise Fail "what do you want from me?"
                   (*handle _ => OS.Process.success*)
   end

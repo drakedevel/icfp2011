@@ -21,3 +21,4 @@ Group is
         readerwriter.sml
         top.sml
         load.sml
+		terms.sml
