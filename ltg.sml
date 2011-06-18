@@ -1,5 +1,6 @@
 structure LTG =
 struct
+  structure BoardMap = IntMap
   type slotno = int             (* slot number *)
   type value = int              (* field value (other than function) *)
   type vitality = int
@@ -37,8 +38,8 @@ struct
 
   datatype app_dir = LeftApp | RightApp
 
-  datatype board = B of { f : comb array, v: vitality array,
-                          f': comb array, v': vitality array }
+  datatype board = B of { f : comb BoardMap.map ref, v: vitality BoardMap.map ref,
+                          f': comb BoardMap.map ref, v': vitality BoardMap.map ref }
 
   val num_slots : slotno = 256
   val init_vitality : vitality = 10000
@@ -65,16 +66,19 @@ struct
     | show_comb (% c) = show_card c
     | show_comb (op & (a, b)) = (show_comb a) ^ "(" ^ (show_comb b) ^ ")"
 
-  fun build_board () =
-      B { f = Array.array (num_slots, %CI)
-        , v = Array.array (num_slots, init_vitality)
-        , f' = Array.array (num_slots, %CI)
-        , v' = Array.array (num_slots, init_vitality)
-        }
+  fun build_board () = let
+      val b = B {f = ref BoardMap.empty, v = ref BoardMap.empty, f' = ref BoardMap.empty, v' = ref BoardMap.empty}
+      fun bb 256 (x as B {...}) = x
+        | bb n (x as B {f,v,f',v'}) = (f := (IntMap.insert (!f, n, %CI));
+                                       v := (IntMap.insert (!v, n, 10000));
+                                       f' := (IntMap.insert(!f', n, %CI));
+                                       v' := (IntMap.insert(!v', n, 10000));
+                                       bb (n+1) x)
+  in
+      bb 0 b
+  end
 
-  fun copy_board (B {f, v, f', v'}) =
-      B { f = Util.copyArray f, v = Util.copyArray v,
-          f' = Util.copyArray f', v' = Util.copyArray v' }
+  fun copy_board (B {f,v,f',v'}) = B {f = ref (!f), v = ref (!v), f' = ref (!f'), v' = ref (!v')}
 
   fun %% CZero = CVal 0
     | %% x = % x

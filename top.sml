@@ -5,8 +5,8 @@ struct
   open Evaluator
   infix ?
   val (op ?) = CApp
-  val ! = Array.sub
-  infix 9 !
+  fun !! (x,y) = valOf $ IntMap.find (!x,y)
+  infix 9 !!
 
   val rand = Random.rand (0x1337BABE, 0x1337D00D)
 
@@ -101,12 +101,10 @@ struct
   datatype state_change = SDied | SRevived | SNothing
 
   fun diff_boards (old as B{v=v1,v'=v1',...}) (new as B{v=v2,v'=v2',...}) =
-    let val (mine, theirs) = (Util.copyArray v1, Util.copyArray v1')
-        fun diff (i, vitality) = vitality - v1 ! i
-        val () = Array.modifyi diff mine
-        val () = Array.modifyi diff theirs
+    let val (mine, theirs) = (v1, v1')
+        fun diff (i, vitality) = vitality - v1 !! i
     in
-        (mine, theirs)
+        (IntMap.mapi diff (!mine), IntMap.mapi diff (!theirs))
     end
 
   val fuck_it_threshold = 100
@@ -123,7 +121,6 @@ struct
           SOME (sz e 0)
           handle _ => NONE
     end
-
 
   fun get_board_info old_board new_board =
       let val (my_diff, their_diff) = diff_boards old_board new_board

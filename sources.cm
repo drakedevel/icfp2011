@@ -24,5 +24,6 @@ Group is
         load.sml
 	terms.sml
 	queue.sml
+        search.sml
         monad.sml
 	data.sml
