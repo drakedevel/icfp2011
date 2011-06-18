@@ -20,6 +20,7 @@ struct
   fun isIdempotent x (U.EVar y) = not (V.equal (x, y))
     | isIdempotent x (U.EApp (e1, e2)) = (isIdempotent x e1) andalso (isIdempotent x e2)
     | isIdempotent x (U.ELam (x', e)) = isIdempotent x e
+    | isIdempotent x (U.EVal _) = true
     | isIdempotent x (U.% L.CSucc) = true
     | isIdempotent x (U.% L.CDbl) = true
     | isIdempotent x (U.% L.CS) = true
@@ -36,6 +37,7 @@ struct
     | convertExpr (U.ELam (x, e)) = if isIdempotent x e andalso isHalting e
                     then (L.% L.CK) @ convertExpr e
                     else bracket x (convertExpr e)
+    | convertExpr (U.EVal n) = L.CVal n
     | convertExpr (U.% c) = L.% c
 
 end
