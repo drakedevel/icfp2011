@@ -14,6 +14,11 @@ sig
    *)
   val eval : LTG.board -> LTG.comb -> bool -> LTG.comb option
 
+  val diff_boards : LTG.board -> LTG.board -> (LTG.vitality array * LTG.vitality
+  array)
+
+  val expr_size : LTG.comb -> int
+
   (* run_zombies LTG.board ==> ()
    *
    * Runs all zombies on the LTG.board. Use before turn. *)
@@ -39,6 +44,8 @@ struct
   infix 9 !
   fun sub x y = Array.sub (x, y)
   fun up x y z = Array.update (x, y, z)
+
+  val fuck_it_threshold = 100
 
   exception EvalError of string
   val TooManyApps = EvalError "too many apps"
@@ -111,8 +118,8 @@ struct
              | %CRevive & e => num (fn i => (if is_dead (v ! i) then up v i 1 else (); %CI)) e
              | %CZombie & CVal i & x =>
                (if is_dead $ v' ! (max_slot-i) then () else raise NotDead;
-                up f' (255-i) x;
-                up v' (255-i) ~1;
+                up f' (num_slots - 1 - i) x;
+                up v' (num_slots - 1 - i) ~1;
                 %CI)
              | %CZombie & _ & _ => raise Stuck
              | e => e)
@@ -127,6 +134,28 @@ struct
 
   in SOME $ #1 $ app expr 0
      handle _ => NONE end
+
+  fun diff_boards (old as B{v=v1,v'=v1',...}) (new as B{v=v2,v'=v2',...}) =
+    let val (mine, theirs) = (Util.copyArray v1, Util.copyArray v1')
+        fun diff (i, vitality) = vitality - v1 ! i
+        val () = Array.modifyi diff mine
+        val () = Array.modifyi diff theirs
+    in
+        (mine, theirs)
+    end
+
+  fun expr_size e =
+    let fun sz e n =
+    if n = 0 then raise Stuck else
+      case e of
+        CVal _ => 1
+      | CVar _ => 1
+      | CApp (e1, e2) => sz e1 (n-1) + sz e2 (n-1) + 1
+      | e1 & e2 => sz e1 (n-1) + sz e2 (n-1) + 1
+      | %c => 1
+    in
+      sz e fuck_it_threshold
+    end
 
   (* To be run before a turn. Runs all of the zombies *)
   fun run_zombies (board as B{f,v,...}) =
