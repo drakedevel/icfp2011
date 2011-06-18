@@ -106,7 +106,8 @@ in
           (tr, gun' @ volc)
       end
   val snipe = S  ?(S ? (S ? (%CAttack ? (%CSucc ? (%CGet ? EVal 1))) ? (K ? (%CGet ? EVal 0))) ? (S ? (%CAttack ? (%CGet ? (EVal 1))) ? (K ? (%CGet ? EVal 0))))?(S ? %CZombie ? %CGet)
-
+  (*fastload, don't bother to left-apply TPut*)
+  fun fint reg x = List.tl (Load.int reg x)
   val zombocanic =
       let
           val a = Allocator.new ();
@@ -123,7 +124,7 @@ in
           val volc = Load.load a sr (spin' sr (S?(S? %CHelp?I)?(K?(%CGet ? EVal 0))))
       in
           ((snipe_reg, target_reg,reshoot_reg),
-           Load.int 0 6144 @ Load.int 1 128 @ snipe @ volc @ gun' @reshooter@ Load.int 2 0)
+           fint 0 6144 @ fint 1 16 @ snipe @ volc @ gun' @fint target_reg 0, reshooter)
       end  fun load e = Load.load (Allocator.new ()) 0 e
 
   fun load_n e n = Load.load (Allocator.new ()) n e
