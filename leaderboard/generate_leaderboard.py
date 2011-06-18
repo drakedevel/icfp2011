@@ -47,14 +47,14 @@ outfile.write("<th>PCT</th>\n")
 outfile.write("</tr>\n")
 
 team_stats = []
-for tr in rows[1:2]:
+for tr in rows[1:]:
 	cols = tr.findAll('th')
 	num = cols[0].find(text=True)
 	name = cols[1].find(text=True)
 
 	team_stats.append(parseTeam(name, num))
 
-team_stats.sort(key = lambda stat : stat[3])
+team_stats.sort(key = lambda stat : -stat[4])
 for (num,name,wins,duels,pct) in team_stats:
 	outfile.write("<tr>\n")
 	outfile.write("<td>%s</td><td>%s</td><td>%d</td><td>%d</td><td>%f</td>\n" % (num,name,wins,duels,pct))
