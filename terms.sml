@@ -13,11 +13,11 @@ local
     val [x, y, z, n, m, f, n', m', e, a, b,
          x', x'', x''', y', y'', y''', k, w,
          j, i, l, c, d, q, r, u, v, 
-         a', b', a'', b'', h ] =
+         a', b', a'', b'', h, g ] =
         vars ["x", "y", "z", "n", "m", "f", "n'", "m'", "e", "a", "b",
               "x'", "x''", "x'''", "y'", "y''", "y'''", "k", "w",
               "j", "i", "l", "c", "d", "q", "r", "u", "v",
-              "a'", "b'", "a''", "b''", "h" ]
+              "a'", "b'", "a''", "b''", "h", "g" ]
     val S = %CS
     val K = %CK
     val I = %CI
@@ -47,6 +47,8 @@ in
 
   fun repeat F = noobY ? ELam (h, ELam (x, seq ? (F ? `x) ? (`h ? `h)))
   val repeat_lam = ELam (f, repeat (`f))
+  fun repeat_ctr F = noobY ? ELam (h, ELam (n, ELam (g, seq ? (F ? `n) ? (`h ? `h ? (`g ? `n)))))
+  val repeat_lam_ctr = ELam (f, repeat_ctr (`f))
 
   fun thunk E = ELam (x, E)
 
@@ -55,6 +57,14 @@ in
       in ELam (f, ELam (x, e n)) end
 
   val repeat_kill = repeat_lam ? thunk (seqL [dec_n 0, dec_n 1, dec_n 2])
+
+  (* Code for an attack *)
+  fun attack_from j n = ELam (i, %CAttack ? `i ? EVal j ? EVal n)
+
+  fun be_a_helper amt i = thunk (%CHelp ? i ? i ? EVal amt)
+  fun zombie_helper target = ELam (i, %CZombie ? EVal target ? be_a_helper 10000 (`i))
+
+
   val ski = Compile.convertExpr
   local open LTG in
   fun spin n x = 
@@ -72,6 +82,7 @@ in
       end
   val nyan_cat = make_spin 0 (LTG.%CDec)
   fun load e = Load.load (Allocator.new ()) 0 e
+  fun load_n e n = Load.load (Allocator.new ()) n e
   val load' = load o ski
   fun n_cats n = repeat_lam ? ((repeat_n n) ? (thunk $ seqL $ map dec_n [0, 1,
     42]))

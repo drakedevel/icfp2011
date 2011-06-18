@@ -109,6 +109,7 @@ in
       *
       * so loading n into slot i and then shift (get i) takes:
       *)
+     (* XXX: I think this is buggy *)
      fun shiftInt (A : Allocator.allocr) dest n =
          (* FIXME: can determine the shorter without generating both lists *)
          let val shiftEncode = shift dest (encode n)
@@ -117,6 +118,7 @@ in
                                       shift dest (CApp (%CGet, encode i)))
          in minBy length shiftEncode tempShift
          end
+     fun shiftInt _ dest n = shift dest (encode n)
 
      fun loadDumb d (% c) = [R d c]
        | loadDumb d (CVal v) = int d v

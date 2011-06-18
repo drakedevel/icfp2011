@@ -42,7 +42,7 @@ struct
 
   exception EvalError of string
   val TooManyApps = EvalError "too many apps"
-  val Stuck = EvalError "sexceptiontuck"
+  val Stuck = EvalError "stuck"
   val TooBig = EvalError "too big"
   val NotDead = EvalError "not dead"
   val Dead = EvalError "slot dead"
@@ -126,7 +126,8 @@ struct
         | app e n = (e, n)
 
   in SOME $ #1 $ app expr 0
-     handle _ => NONE end
+     handle EvalError s => (Print.esay ("ERR: " ^ s); NONE)
+          | e => (Print.esay ("ERR: " ^ exnMessage e); NONE) end
 
   (* To be run before a turn. Runs all of the zombies *)
   fun run_zombies (board as B{f,v,...}) =
