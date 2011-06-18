@@ -77,8 +77,12 @@ in
   val ski = Compile.convertExpr
   fun spin n x = 
       ski (S ? (S ? (K ? %CGet) ? (K ? (EVal n))) ? (S ? x ? %CSucc))
+  fun spin' n x = 
+      ski (S ? (S ? (K ? %CCopy) ? (K ? (EVal n))) ? (S ? x ? %CSucc))
+
   fun reshoot n x =
       ski (S ? (K ? (S ? ( K ? %CGet ) ? (K ? (EVal n)))) ? x)
+
   fun gun n f = ski (S ? (K ? f) ? ((S ? (K ? %CGet) ? (K ? EVal n))))
 
   fun make_spin n x = 
@@ -101,8 +105,27 @@ in
       in
           (tr, gun' @ volc)
       end
+  val snipe = S  ?(S ? (S ? (%CAttack ? (%CSucc ? (%CGet ? EVal 1))) ? (K ? (%CGet ? EVal 0))) ? (S ? (%CAttack ? (%CGet ? (EVal 1))) ? (K ? (%CGet ? EVal 0))))?(S ? %CZombie ? %CGet)
 
-  fun load e = Load.load (Allocator.new ()) 0 e
+  val zombocanic =
+      let
+          val a = Allocator.new ();
+          val gr = Allocator.alloc a;
+          val sr = Allocator.alloc a;
+          val target_reg = Allocator.alloc a;
+          val snipe_reg = Allocator.alloc a;
+          val reshoot_reg = Allocator.alloc a;
+          val reshooter = Load.load a  reshoot_reg (reshoot reshoot_reg (S ? %CZombie ? %CGet))
+          val snipe = Load.load a snipe_reg (ski snipe)
+          val gun_arg = (S ? (%CCopy) ? ((S ? (K ? %CCopy) ? (K ? EVal target_reg))))
+          val gun = ski (S ? (K ? gun_arg) ? ((K ? EVal sr)))
+          val gun' =  Load.load a gr gun
+          val volc = Load.load a sr (spin' sr (S?(S? %CHelp?I)?(K?(%CGet ? EVal 0))))
+      in
+          ((snipe_reg, target_reg,reshoot_reg),
+           Load.int 0 6144 @ Load.int 1 128 @ snipe @ volc @ gun' @reshooter@ Load.int 2 0)
+      end  fun load e = Load.load (Allocator.new ()) 0 e
+
   fun load_n e n = Load.load (Allocator.new ()) n e
   val load' = load o ski
   fun n_cats n = repeat_lam ? ((repeat_n n) ? (thunk $ seqL $ map dec_n [0, 1,
