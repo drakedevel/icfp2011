@@ -43,23 +43,6 @@ struct
   val num_slots : slotno = 256
   val init_vitality : vitality = 10000
 
-  fun from_cardno 0 = CI
-    | from_cardno 1 = CZero
-    | from_cardno 2 = CSucc
-    | from_cardno 3 = CDbl
-    | from_cardno 4 = CGet
-    | from_cardno 5 = CPut
-    | from_cardno 6 = CS
-    | from_cardno 7 = CK
-    | from_cardno 8 = CInc
-    | from_cardno 9 = CDec
-    | from_cardno 10 = CAttack
-    | from_cardno 11 = CHelp
-    | from_cardno 12 = CCopy
-    | from_cardno 13 = CRevive
-    | from_cardno 14 = CZombie
-    | from_cardno _ = raise Fail "wtf"
-
   fun show_card CI = "I"
     | show_card CZero = "zero"
     | show_card CSucc = "succ"
@@ -95,4 +78,40 @@ struct
 
   fun %% CZero = CVal 0
     | %% x = % x
+
+  val card_to_int =
+   fn CI      => 0
+    | CZero   => 1
+    | CSucc   => 2
+    | CDbl    => 3
+    | CGet    => 4
+    | CPut    => 5
+    | CS      => 6
+    | CK      => 7
+    | CInc    => 8
+    | CDec    => 9
+    | CAttack => 10
+    | CHelp   => 11
+    | CCopy   => 12
+    | CRevive => 13
+    | CZombie => 14
+
+  val int_to_card =
+   fn 0 => CI
+    | 1 => CZero
+    | 2 => CSucc
+    | 3 => CDbl
+    | 4 => CGet
+    | 5 => CPut
+    | 6 => CS
+    | 7 => CK
+    | 8 => CInc
+    | 9 => CDec
+    | 10 => CAttack
+    | 11 => CHelp
+    | 12 => CCopy
+    | 13 => CRevive
+    | 14 => CZombie
+    | _ => raise Fail "wtf"
+      
 end

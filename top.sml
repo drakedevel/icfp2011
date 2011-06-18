@@ -12,7 +12,7 @@ struct
              | 1 => RightApp
              | _ => raise Fail "wtf"
 
-  fun randCard () = from_cardno (Random.randRange (0,14) rand)
+  fun randCard () = int_to_card (Random.randRange (0,14) rand)
 
   fun randSlot () = Random.randRange (0,255) rand
 
