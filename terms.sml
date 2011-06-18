@@ -44,6 +44,9 @@ in
   fun thunk E = ELam (x, E)
 
   fun dec_n n = %CDec ? EVal n
+  fun inc_n n = %CInc ? EVal n
+  fun copy_n n = %CGet ? EVal n
+
 
   val repeat_kill = repeat_lam ? thunk (seqL [dec_n 0, dec_n 1, dec_n 2])
 
