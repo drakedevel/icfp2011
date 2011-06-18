@@ -28,3 +28,4 @@ Group is
 	queue.sml
         search.sml
         monad.sml
+	data.sml

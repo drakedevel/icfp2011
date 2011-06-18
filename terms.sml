@@ -6,6 +6,8 @@ local
     open UTLCNamed
     val ` = EVar
     val ? = EApp
+    infix 0 $$
+    val (op $$) = CApp
     infix 7 ?
     val vars = map Variable.named
     val [x, y, z, n, m, f, n', m', e, a, b,
@@ -54,9 +56,21 @@ in
 
   val repeat_kill = repeat_lam ? thunk (seqL [dec_n 0, dec_n 1, dec_n 2])
   val ski = Compile.convertExpr
-  fun spin n x = S ? (S ? ( K ? %CGet ) ? (K ? (EVal n))) ? (S ? x ? %CInc) ? %CZero
-  fun make_spin n x = Load.load (Allocator.new ()) n (ski (spin n x))
-  val nyan_cat = make_spin 0 (%CDec)
+  local open LTG in
+  fun spin n x = 
+      %CS $$ (%CS $$ ( %CK $$ %CGet ) $$ (%CK $$ (CVal n))) $$ (%CS $$ x $$ %CSucc)
+  fun reshoot n x =
+      %CS $$ (%CK $$ (%CS $$ ( %CK $$ %CGet ) $$ (%CK $$ (CVal n)))) $$ x
+  end
+
+
+  fun make_spin n x = 
+      let
+          val alloc = Allocator.new ();
+          val _ = Allocator.use alloc n in
+          Load.load alloc n (spin n x)
+      end
+  val nyan_cat = make_spin 0 (LTG.%CDec)
   fun load e = Load.load (Allocator.new ()) 0 e
   val load' = load o ski
   fun n_cats n = repeat_lam ? ((repeat_n n) ? (thunk $ seqL $ map dec_n [0, 1,
