@@ -129,12 +129,31 @@ struct
   fun logic info = ()
 
   (* Let's fire off a job... *)
-  fun fire () = ignore (Job.schedule [R 1 CGet, R 1 CZero, R 1 CZero] Job.RForever)
+  val (tr,volcanic) = Terms.volcanic
+  local 
+      val once = Job.ROnce
+  in
+  fun load n f () = ignore (Job.schedule (Load.int tr n) (once (f 1000) ))
+  and fire1 0 () =
+      ignore (Job.schedule [R 10 CGet, R 10 CZero, R 10 CZero] (once (load 109 fire2)))
+    | fire1 n () =
+      ignore (Job.schedule [R 10 CGet, R 10 CZero, R 10 CZero] (once (fire1 (n-1))))
 
+  and fire2 0 () = 
+      ignore (Job.schedule [R 10 CGet, R 10 CZero, R 10 CZero] (once (load (255-109) fire3)))
+    | fire2 n () =
+      ignore (Job.schedule [R 10 CGet, R 10 CZero, R 10 CZero] (once (fire2 (n-1))))
+
+  and fire3 0 () = 
+      ignore (Job.schedule [R 10 CGet, R 10 CZero, R 10 CZero] (once (load 0 fire1)))
+    | fire3 n () = 
+      ignore (Job.schedule [R 10 CGet, R 10 CZero, R 10 CZero] (once (fire3 (n-1))))
+  end
   fun addNoobing () = ignore (Job.schedule [ R 0 CI ] Job.RForever)
                       
   (*val _ = Job.schedule (Terms.load' Terms.repeat_kill) (Job.ROnce addNoobing)*)
-  val _  = Job.schedule (Terms.nyan_cat) (Job.ROnce fire)
+
+  val _  = Job.schedule (volcanic) (Job.ROnce (load 0 fire1))
 
   local
       fun proponent b_old b = let

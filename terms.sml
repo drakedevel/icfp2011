@@ -6,8 +6,6 @@ local
     open UTLCNamed
     val ` = EVar
     val ? = EApp
-    infix 0 $$
-    val (op $$) = CApp
     infix 7 ?
     val vars = map Variable.named
     val [x, y, z, n, m, f, n', m', e, a, b,
@@ -56,13 +54,11 @@ in
 
   val repeat_kill = repeat_lam ? thunk (seqL [dec_n 0, dec_n 1, dec_n 2])
   val ski = Compile.convertExpr
-  local open LTG in
   fun spin n x = 
-      %CS $$ (%CS $$ ( %CK $$ %CGet ) $$ (%CK $$ (CVal n))) $$ (%CS $$ x $$ %CSucc)
+      ski (S ? (S ? (K ? %CGet) ? (K ? (EVal n))) ? (S ? x ? %CSucc))
   fun reshoot n x =
-      %CS $$ (%CK $$ (%CS $$ ( %CK $$ %CGet ) $$ (%CK $$ (CVal n)))) $$ x
-  end
-
+      ski (S ? (K ? (S ? ( K ? %CGet ) ? (K ? (EVal n)))) ? x)
+  fun gun n f = ski (S ? (K ? f) ? ((S ? (K ? %CGet) ? (K ? EVal n))))
 
   fun make_spin n x = 
       let
@@ -70,7 +66,21 @@ in
           val _ = Allocator.use alloc n in
           Load.load alloc n (spin n x)
       end
-  val nyan_cat = make_spin 0 (LTG.%CDec)
+  val nyan_cat = make_spin 0 (%CDec)
+  val volcanic =
+      let
+          val a = Allocator.new ();
+          val gr = Allocator.alloc a;
+          val sr = Allocator.alloc a;
+          val tr = Allocator.alloc a;
+          val gun_arg = (S ? (%CGet) ? ((S ? (K ? %CGet) ? (K ? EVal tr))))
+          val gun = ski (S ? (K ? gun_arg) ? ((K ? EVal sr)))
+          val gun' =  Load.load a gr gun
+          val volc = Load.load a sr (spin sr (%CDec))
+      in
+          (tr, gun' @ volc)
+      end
+
   fun load e = Load.load (Allocator.new ()) 0 e
   val load' = load o ski
   fun n_cats n = repeat_lam ? ((repeat_n n) ? (thunk $ seqL $ map dec_n [0, 1,
