@@ -11,11 +11,11 @@ local
     val [x, y, z, n, m, f, n', m', e, a, b,
          x', x'', x''', y', y'', y''', k, w,
          j, i, l, c, d, q, r, u, v, 
-         a', b', a'', b'', h, g ] =
+         a', b', a'', b'', h, g, z', z'', z''' ] =
         vars ["x", "y", "z", "n", "m", "f", "n'", "m'", "e", "a", "b",
               "x'", "x''", "x'''", "y'", "y''", "y'''", "k", "w",
               "j", "i", "l", "c", "d", "q", "r", "u", "v",
-              "a'", "b'", "a''", "b''", "h", "g" ]
+              "a'", "b'", "a''", "b''", "h", "g", "z'", "z''", "z'''" ]
     val S = %CS
     val K = %CK
     val I = %CI
@@ -49,6 +49,17 @@ in
   val repeat_lam_ctr = ELam (f, repeat_ctr (`f))
 
   fun thunk E = ELam (x, E)
+(* Precondition:
+* Health ourDead and theirDead are zero
+* benignCommand and dickingCommand each contain a thunk
+* Postcondition:
+* Every turn, dickingCommand will be executed on the remote host, and
+* benignCommand will be executed locally.
+*)
+  fun zombocom ourDead theirDead benignCommand dickingCommand = noobY ? ELam (f,
+    %CZombie ? EVal (255 - theirDead) ? (ELam (z, ELam(z', %CZombie ? EVal
+    (255 - ourDead) ? (ELam(z'', ELam(z''', `f ? `f) ? ((%CGet ?
+    EVal(benignCommand) ? `z''))))) ? (%CCopy ? (EVal(dickingCommand)) ? `z))))
 
   fun repeat_n n = 
       let fun e n = if n = 0 then `x else `f ? (e (n - 1)) 
