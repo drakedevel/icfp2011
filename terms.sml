@@ -32,6 +32,9 @@ in
   val Y3 = ELam (f, ELam (x, `x ? `x) ?
                          ELam (x, `f ? ELam (y, `x ? `x ? `y)))
 
+  fun repeat_n n = let e n = if n == 0 then x else `f ? (repeat_n (n - 1)) in ELam (f, ELam (x, e n))
+
+  fun n_cats n = repeat $ (repeat_n n) ? (thunk $ seqL $ map dec_n [0, 1, 42])
 
   val noobY = S ? I ? I
 
