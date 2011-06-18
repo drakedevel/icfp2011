@@ -98,7 +98,7 @@ struct
   fun isIdempotent x (U.EVar y) = not (V.equal (x, y))
     | isIdempotent x (U.ELam (x', e)) = isIdempotent x e
     | isIdempotent x (U.EApp (U.% L.CK, e2)) = isIdempotent x e2
-    | isIdempotent x (U.EApp (U.EApp (U.% L.CS, e1), e2)) = 
+    | isIdempotent x (U.EApp (U.EApp (U.% L.CS, e1), e2)) =
       isIdempotent x e1 andalso isIdempotent x e2
     | isIdempotent x (U.EApp (U.% L.CS, e1)) = isIdempotent x e1
     | isIdempotent x (U.EApp _) = false
