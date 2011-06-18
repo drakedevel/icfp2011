@@ -21,6 +21,8 @@ local
     val R = E.R
 in
 
+  (* We want some sort of scheme to reserve 
+   * slots we are otherwising using *)
   structure Allocator : ALLOCATOR =
   struct
     (* TODO: always use lowest available slot *)
