@@ -65,7 +65,11 @@ struct
     fun peep (%CS CApp %CK CApp %_) = %CI
       | peep (%CS CApp (%CK CApp %x) CApp %CI) = %x (* I have only tested this, not proven it correct *)
       | peep (%CK CApp %CI) = %CPut
-      | peep (e as %CPut CApp exp) = if is_pure exp then %CI else e
+      | peep (e as %CPut CApp exp) = if is_pure exp
+                                     then (Log.log ("replacing pure " ^ show_comb e
+                                                    ^ " with " ^ show_comb (%CI));
+                                           %CI)
+                                     else e
       | peep (%CI CApp x) = x
       | peep x = x
   end
