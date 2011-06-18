@@ -42,7 +42,7 @@ structure Job : JOB = struct
   fun runJob (j as { repeat, moves, cur, enabled }) = hd (!cur)
     before (
       cur := tl (!cur);
-      case (!cur, repeat) of 
+      case (!cur, repeat) of
         (nil, ROnce) => ()
       | (nil, RForever) => (outStack := j::(!outStack); cur := moves)
       | (_, _) => (outStack := j::(!outStack))
