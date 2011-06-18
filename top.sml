@@ -132,8 +132,12 @@ struct
   fun logic info = ()
 
   (* Let's fire off a job... *)
+  fun fire () = ignore (Job.schedule [R 1 CGet, R 1 CZero, R 1 CZero] Job.RForever)
+
   fun addNoobing () = ignore (Job.schedule [ R 0 CI ] Job.RForever)
-  val _ = Job.schedule (Terms.load' Terms.repeat_kill) (Job.ROnce addNoobing)
+                      
+  (*val _ = Job.schedule (Terms.load' Terms.repeat_kill) (Job.ROnce addNoobing)*)
+  val _  = Job.schedule (Terms.nyan_cat) (Job.ROnce fire)
 
   local
       fun proponent b_old b = let
