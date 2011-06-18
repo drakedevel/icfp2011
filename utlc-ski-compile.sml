@@ -15,6 +15,7 @@ struct
 
   local
     open LTG
+    open Util
     infix CApp
     infix &
   in
@@ -50,7 +51,7 @@ struct
       | is_pure (% _) = true
       | is_pure (CVal _) = true
       | is_pure (_ & _) = true
-      | is_pure (CVar _) = raise Fail "variables not allowed"
+      | is_pure (CVar _) = true
 
     and is_pure_func (%CS & f & g) = is_pure_func f andalso is_pure_func g
       (* application *)
@@ -72,15 +73,24 @@ struct
                                      else e
       | peep (%CI CApp x) = x
       | peep x = x
+
+    fun containsVar v (CVal _) = false
+      | containsVar v (CVar v') = Variable.equal (v, v')
+      | containsVar v (f CApp x) = containsVar v f orelse containsVar v x
+      | containsVar v (% c) = false
+
   end
 
   local val % = L.% in
-    fun bracket' x (C as L.CVar y) =
-        if V.equal (x, y) then (% L.CI)
-        else (% L.CK) @ C
-      | bracket' x (L.CApp (C1, C2)) = peep (%L.CS @ bracket x C1) @ bracket x C2
-      | bracket' x C = (% L.CK) @ C
-    and bracket x C = peep (bracket' x C)
+    fun bracket' x c =
+        (* TODO running containsVar andalso is_pure at every level is unnecessary. *)
+        if not (containsVar x c) andalso is_pure c then %L.CK @ c else
+        case c
+         of L.CVar y => if V.equal (x, y) then (% L.CI)
+                        else (% L.CK) @ c
+          | L.CApp (C1, C2) => peep (%L.CS @ bracket x C1) @ bracket x C2
+          | _ => % L.CK @ c
+    and bracket x c = bracket' x c
   end
 
 (*
