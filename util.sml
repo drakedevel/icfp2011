@@ -64,6 +64,12 @@ struct
           val (l', z') = foldl helper ([], z) l
       in (rev l', z') end
 
+  fun foldl1 f (x::xs) = foldl f x xs
+    | foldl1 _ _ = raise Fail "foldl1: empty list"
+  fun foldr1 _ [x] = x
+    | foldr1 f (x::xs) = f (x, foldr1 f xs)
+    | foldr1 _ _ = raise Fail "foldr1: empty list"
+
   fun split f l =
       let fun splitter' cur blocks [] = rev (map rev (cur::blocks))
             | splitter' cur blocks [x] = splitter' (x::cur) blocks []
