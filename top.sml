@@ -100,25 +100,23 @@ struct
   val _ = Job.schedule (Terms.load' Terms.repeat_kill) (Job.ROnce addNoobing)
 
   local
-      val b = build_board ()
-
-      fun proponent () = let
+      fun proponent b = let
           val mv = Job.get_move ()
         in
           ReaderWriter.put_move mv;
           run_move b mv;
-          opponent ()
+          opponent (switch_teams b)
         end
-      and opponent () = let
+      and opponent b = let
           val mv = ReaderWriter.get_move ()
         in
           run_move b mv;
-          proponent ()
+          proponent (switch_teams b)
         end
   in
       fun main (name, args) = case args of
-             ["0"] => proponent ()
-           | ["1"] => opponent ()
+             ["0"] => proponent (build_board ())
+           | ["1"] => opponent (build_board ())
            | _ => raise Fail "what do you want from me?!"
   end
 
