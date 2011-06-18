@@ -4,7 +4,7 @@ Group is
         $smlnj-tdp/back-trace.cm
 
         eval.sml
-        
+
         variable.sml
         variable-sig.sml
         utlc-named.sml
@@ -29,3 +29,4 @@ Group is
         search.sml
         monad.sml
 	data.sml
+        log.sml
