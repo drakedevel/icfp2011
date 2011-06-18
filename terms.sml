@@ -32,7 +32,7 @@ in
   val Y3 = ELam (f, ELam (x, `x ? `x) ?
                          ELam (x, `f ? ELam (y, `x ? `x ? `y)))
 
-  fun repeat_n n = let fun e n = if n = 0 then `x else `f ? (repeat_n (n - 1)) in ELam (f, ELam (x, e n)) end
+  fun repeat_n n = let fun e n = if n = 0 then `x else `f ? (e (n - 1)) in ELam (f, ELam (x, e n)) end
 
   fun dec_n n = %CDec ? EVal n
   fun inc_n n = %CInc ? EVal n
@@ -55,8 +55,9 @@ in
   fun n_cats n = repeat $ (repeat_n n) ? (thunk $ seqL $ map dec_n [0, 1, 42])
 
   val repeat_kill = repeat_lam ? thunk (seqL [dec_n 0, dec_n 1, dec_n 2])
-
   val ski = Compile.convertExpr
+  fun spin n x = S ? (S ? ( K ? %CGet ) ? (K ? (EVal n))) ? (S ? x ? %CInc) ? %CZero
+  fun make_spin n x = Load.load (Allocator.new ()) n (ski (spin n x))
   fun load e = Load.load (Allocator.new ()) 0 e
   val load' = load o ski
   fun n_cats n = repeat $ (repeat_n n) ? (thunk $ seqL $ map dec_n [0, 1, 42])
