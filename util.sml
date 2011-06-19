@@ -22,6 +22,9 @@ struct
   fun first (x, _) = x
   fun second (_, y) = y
 
+  fun replicate 0 _ = []
+    | replicate n x = x :: (replicate (n - 1) x)
+
   fun first3 (x, _, _) = x
   fun second3 (_, y, _) = y
   fun third3 (_, _, z) = z

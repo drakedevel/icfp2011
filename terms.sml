@@ -115,7 +115,15 @@ in
          (S ? %CZombie ? (fetch gr))
   (*fastload, don't bother to left-apply CPut*)
   fun fint reg x = List.tl (Load.int reg x)
-
+  fun durka_durka self target = ski ((%CAttack ? (EVal self) ? (EVal target) ? (EVal
+    9999)))
+  fun take_him_down target = let
+    val a = Allocator.new ()
+    val _ = Allocator.use a 0
+    val sac = Allocator.alloc a
+    val sac' = Allocator.alloc a
+    in (Load.load a sac (durka_durka sac target)) @ (Load.load a sac'
+    (durka_durka sac' target)) end
   fun zombocanic a =
       let
           val (L,R) = (Evaluator.L,Evaluator.R)
