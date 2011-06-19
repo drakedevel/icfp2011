@@ -23,11 +23,14 @@ struct
   fun allocHealthy a (B{v,...}) n = M.allocFilter (fn i => (v !! i) > n) a
   val threshold = 8192
 
+  fun is_zombo_killable i = i > threshold
+
   (* Let's fire off a job... *)
   fun wonton_snipe (regs,reload_reg,tr) (B {v'=v',v=v,...}) =
-  case LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v')) of
+  case LTG.BoardMap.firsti (LTG.BoardMap.filter is_zombo_killable (!v')) of
       SOME (slot,vit) =>
       RunningAttack (Load.int tr slot @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
+    (* FIXME: we need to do something reasonable here. this is completely useless. *)
     | NONE => RunningAttack (Load.int tr 0 @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
 
   fun build_attack b random old  = let
