@@ -21,12 +21,7 @@ struct
   datatype data = D of {state: state, analysis: A.anal_comb}
 
   (* Let's fire off a job... *)
-  fun build_attack_old ()  = let
-      val ((snipe,tr,reload_reg),zomb,reload,regs) = 
-          Terms.zombocanic_old allocator
-
-      val shoot = R reload_reg CZero
-      fun wonton_snipe  (B {v'=v',v=v,...}) =
+      fun wonton_snipe (regs,reload_reg,tr) (B {v'=v',v=v,...}) =
           let
               val SOME (slot,vit) = 
                   LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v))
@@ -36,11 +31,16 @@ struct
                   LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v'))
               val _ = Print.esay ("found: "^Int.toString slot ^ " with value: "^ Int.toString vit);
           in
-              RunningAttack (Load.int slot 0 @ [shoot], regs, wonton_snipe)
+              RunningAttack (Load.int tr slot @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
           end
+  fun build_attack_old ()  = let
+      val ((snipe,tr,reload_reg),zomb,reload,regs) = 
+          Terms.zombocanic_old allocator
+
+      val shoot = R reload_reg CZero
       fun continue_snipe _ = 
           RunningAttack (Load.int tr 66 @ [shoot, L CDbl tr, shoot] 
-                         @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe)
+                         @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe (regs,reload_reg,tr))
       fun load_resnipe _ = BuildingAttack (reload, regs, continue_snipe)
       fun pull_trigger _ = RunningAttack ([R snipe CZero], regs, load_resnipe)
 
@@ -57,13 +57,8 @@ struct
           Terms.zombocanic a 8 9
 
       val shoot = R reload_reg CZero
-      fun wonton_snipe _ = 
-          RunningAttack ([L CSucc tr, shoot], regs, wonton_snipe)
-      fun continue_snipe _ = 
-          RunningAttack (Load.int tr 66 @ [shoot, L CDbl tr, shoot] 
-                         @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe)
-      fun load_resnipe b = BuildingAttack (reload, regs, continue_snipe)
-      fun pull_trigger  b = RunningAttack ([R snipe CZero], regs, load_resnipe)
+
+      fun pull_trigger  b = RunningAttack ([R snipe CZero], regs, wonton_snipe (regs, reload_reg,snipe))
 
       val initialize = BuildingAttack (zomb, regs, pull_trigger)
 
@@ -97,7 +92,7 @@ struct
       val (move, state') = step state
 
   in ({state=state', analysis=analysis'}, move) end
-
+                                               
   local
       fun proponent state b diff = let
           val () = M.update allocator b
