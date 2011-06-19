@@ -141,12 +141,14 @@ in
           ((snipe_reg, target_reg,reshoot_reg),
            fint 0 16 @ [R 1 CGet, R 1 CZero] @ rep 9 (L CDbl 0) @
            snipe @ volc @ gun' @Load.int target_reg 0, reshooter)
-      end  fun load e = Load.load (Allocator.new ()) 0 e
+      end
 
-  fun load_n e n = Load.load (Allocator.new ()) n e
-  val load' = load o ski
-  fun n_cats n = repeat_lam ? ((repeat_n n) ? (thunk $ seqL $ map dec_n [0, 1,
-    42]))
+  (* fun load e = Load.load (Allocator.new ()) 0 e
+   * 
+   * fun load_n e n = Load.load (Allocator.new ()) n e
+   * val load' = load o ski
+   * fun n_cats n = repeat_lam ? ((repeat_n n) ? (thunk $ seqL $ map dec_n [0, 1,
+   *   42])) *)
 
 end
 end
