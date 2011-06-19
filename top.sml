@@ -22,16 +22,24 @@ struct
 
   (* Let's fire off a job... *)
   fun build_attack () = let
-      fun fire () = ignore (Job.schedule [R 1 CGet, R 1 CZero, R 1 CZero] Job.RForever)
+      val ((snipe,tr,reload_reg),zomb,reload,regs) = Terms.zombocanic_old allocator
 
-      val ((snipe,tr,reload_reg),zomb,reload,regs) = Terms.zombocanic allocator
-      val do_snipe = R snipe CZero :: reload
-      val careful_snipe = Load.int tr 66 @ [R reload_reg CZero, L CDbl tr, R reload_reg CZero]
-      fun re_snipe x () = 
-          RunningAttack (Load.int tr x @ [R reload_reg CZero], regs, re_snipe $ (x+1) mod (256))
-      val attack = zomb @ do_snipe @ careful_snipe
+(*      val careful_snipe = Load.int tr 66 @ [R reload_reg CZero, L CDbl tr, R reload_reg CZero]*)
+      val shoot = R reload_reg CZero
+      fun wonton_snipe 0 () = 
+          RunningAttack (Load.int tr 0 @ [shoot], regs, wonton_snipe 0)
+        | wonton_snipe n () =
+          RunningAttack ([L CSucc tr, shoot], regs, wonton_snipe (n+1))
+      fun continue_snipe () = 
+          RunningAttack (Load.int tr 66 @ [shoot, R tr CDbl, shoot] 
+                         @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe 0)
+      fun load_resnipe () = BuildingAttack (reload, regs, continue_snipe)
+      fun pull_trigger  () = RunningAttack ([R snipe CZero], regs, load_resnipe)
+
+      val initialize = BuildingAttack (zomb, regs, pull_trigger)
+
   in 
-      BuildingAttack (attack, regs, re_snipe (66*3))
+      initialize(*BuildingAttack (attack, regs, re_snipe (66*3))*)
   end
 
   val frees = M.freeMany allocator
