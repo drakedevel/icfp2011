@@ -27,27 +27,40 @@ struct
   val loadInt = Load.int
   val load = Load.load
 
-  fun is_zombo_killable i = i > threshold
+  fun is_zombo_killable i = i > 8192
+  fun yieldify v = 8192(*1 + ((10 * v) div 21)*)
+
+  fun zamboni _ (lo, hi) k 256 = ((lo, hi), k)
+    | zamboni (b as B{v',...}) (lo, hi) i k =
+      let val k = v' !! i
+          val lo' = Int.max (lo, lo * k div 21)
+          val hi' = Int.min (hi, k)
+      in if lo' > hi' then ((lo, hi), k) else
+         zamboni b (lo', hi') (k+1) (i+1)
+      end
+  fun cmp_ranges ((_, len), (_, len')) = Int.compare (len, len')
+  fun find_largest_range b =
+      max_elem cmp_ranges $ map (zamboni b (0, max_slot) 0) $ upto num_slots
 
   (* Let's fire off a job... *)
-  fun wonton_snipe (regs,reload_reg,tr) (B {v'=v',v=v,...}) =
+  fun wonton_snipe (regs,reload_reg,tr,yield_reg) (B {v'=v',v=v,...}) =
   case max_elem Int.compare $ sequenceLengths is_zombo_killable $ BM.elems (!v') of
       SOME (slot,vit) =>
-      RunningAttack (loadInt tr slot @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
+      RunningAttack ((if yield_reg < 0 then [] else (loadInt yield_reg (yieldify vit))) @ (loadInt tr slot) @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr,yield_reg))
     (* FIXME: we need to do something reasonable here. this is completely useless. *)
-    | NONE => RunningAttack (loadInt tr 0 @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
+    | NONE => RunningAttack (loadInt tr 0 @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr,yield_reg))
 
   fun build_attack b random old  = let
       val a = if random andalso not old then allocator else Allocator.cheap allocator
-      val ((snipe,tr,reload_reg),zomb,reload,regs) = 
+      val ((snipe,tr,reload_reg,yield_reg),zomb,reload,regs) = 
           if old then Terms.zombocanic_old a else
-          Terms.zombocanic a (allocHealthy a b threshold) (allocHealthy a b threshold)
+          Terms.zombocanic_selectable_yield a (allocHealthy a b threshold) (allocHealthy a b threshold)
 
       val shoot = R reload_reg CZero
       fun continue_snipe _ = 
           RunningAttack (Load.int tr 66 @ [shoot, L CDbl tr, shoot] 
-                         @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe (regs,reload_reg,tr))
-      fun load_resnipe _ = BuildingAttack (reload, regs, continue_snipe)
+                         @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe (regs,reload_reg,tr,yield_reg))
+      fun load_resnipe _ = BuildingAttack (reload, regs, if old then (continue_snipe) else (wonton_snipe (regs,reload_reg,tr,yield_reg)))
       fun pull_trigger _ = RunningAttack ([R snipe CZero], regs, load_resnipe)
 
       val initialize = BuildingAttack (zomb, regs, pull_trigger)

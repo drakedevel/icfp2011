@@ -119,12 +119,13 @@ in
        (Load.load sac' (durka_durka sac' target))
   end
 
-  fun zombocanic a d1 d2 =
+  fun zombocanic_selectable_yield a d1 d2 =
       let
           val (L,R) = (Evaluator.L,Evaluator.R)
           val gr = Allocator.alloc a
           val sr = Allocator.alloc a
           val target_reg = Allocator.alloc a
+          val yield_reg = Allocator.alloc a
           val snipe_reg = Allocator.alloc a
           val reshoot_reg = Allocator.alloc a
           val reshooter = 
@@ -142,13 +143,13 @@ in
           val gun_arg = (S ? (%CCopy(*sr*)) ? ((S ? (K ? %CCopy) ? (K ? EVal target_reg))))
           val gun = ski (S ? (K ? gun_arg) ? ((K ? EVal sr)))
           val gun' =  Load.load gr gun
-          val volc = Load.load sr (spin' sr (S?(S? %CHelp?I)?(K?(EVal 8192))))
+          val volc = Load.load sr (spin' sr (S ? (S ? %CHelp ? I) ? (S ? (K ? %CGet) ? (K ? EVal yield_reg))))
           fun rep 0 _ = []
             | rep n x = x::rep (n-1) x
       in
-          ((snipe_reg, target_reg,reshoot_reg),
+          ((snipe_reg, target_reg, reshoot_reg, yield_reg),
            snipe @ volc @ gun' @Load.int target_reg 0, reshooter,
-           [d1, d2, snipe_reg, target_reg, reshoot_reg, gr, sr])
+           [d1, d2, snipe_reg, target_reg, yield_reg, reshoot_reg, gr, sr])
       end
 
 
@@ -179,7 +180,7 @@ in
           fun rep 0 _ = []
             | rep n x = x::rep (n-1) x
       in
-          ((snipe_reg, target_reg,snipe_reg),
+          ((snipe_reg, target_reg, snipe_reg, ~1),
            Load.intFast 0 8 @ [R 1 CGet, R 1 CZero] @ rep 10 (L CDbl 0) @
            snipe @ volc @ gun' @ Load.intFast target_reg 0,
            reshooter,
