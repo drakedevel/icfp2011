@@ -20,22 +20,21 @@ struct
                  | RunningAttack of move list * slotno list * (board -> state)
   datatype data = D of {state: state, analysis: A.anal_comb}
 
-  (* Let's fire off a job... *)
-      fun wonton_snipe (regs,reload_reg,tr) (B {v'=v',v=v,...}) =
-          let
-              val SOME (slot,vit) = 
-                  LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v))
-              val _ = Print.esay ("found: "^Int.toString slot ^ " with value: "^ Int.toString vit);
+  fun allocHealthy a (B{v,...}) n = M.allocFilter (fn i => (v !! i) > n) a
+  val threshold = 8192
 
-              val SOME (slot,vit) = 
-                  LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v'))
-              val _ = Print.esay ("found: "^Int.toString slot ^ " with value: "^ Int.toString vit);
-          in
-              RunningAttack (Load.int tr slot @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
-          end
-  fun build_attack_old ()  = let
+  (* Let's fire off a job... *)
+  fun wonton_snipe (regs,reload_reg,tr) (B {v'=v',v=v,...}) =
+  case LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v')) of
+      SOME (slot,vit) =>
+      RunningAttack (Load.int tr slot @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
+    | NONE => RunningAttack (Load.int tr 0 @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
+
+  fun build_attack b random old  = let
+      val a = if random andalso not old then allocator else Allocator.cheap allocator
       val ((snipe,tr,reload_reg),zomb,reload,regs) = 
-          Terms.zombocanic_old allocator
+          if old then Terms.zombocanic_old a else
+          Terms.zombocanic a (allocHealthy a b threshold) (allocHealthy a b threshold)
 
       val shoot = R reload_reg CZero
       fun continue_snipe _ = 
@@ -45,25 +44,8 @@ struct
       fun pull_trigger _ = RunningAttack ([R snipe CZero], regs, load_resnipe)
 
       val initialize = BuildingAttack (zomb, regs, pull_trigger)
-
   in 
-      initialize(*BuildingAttack (attack, regs, re_snipe (66*3))*)
-  end
-
-  fun build_attack_new random = let
-      val a = if random then allocator else Allocator.cheap allocator
-      val ((snipe,tr,reload_reg),zomb,reload,regs) = 
-          (*TODO: actually allocate them*)
-          Terms.zombocanic a 8 9
-
-      val shoot = R reload_reg CZero
-
-      fun pull_trigger  b = RunningAttack ([R snipe CZero], regs, wonton_snipe (regs, reload_reg,snipe))
-
-      val initialize = BuildingAttack (zomb, regs, pull_trigger)
-
-  in 
-      initialize(*BuildingAttack (attack, regs, re_snipe (66*3))*)
+      initialize
   end
 
   val frees = M.freeMany allocator
@@ -74,11 +56,7 @@ struct
       val bring_out_yer_dead = List.filter (flip contains $ dead)
 
 
-      fun step (Start) = step $ build_attack_old ()
-        (* can we repeat the attack better?
-        | step (BuildingAttack ([], regs)) =
-          (frees regs; step $ build_attack ())
-         *)
+      fun step (Start) = step $ build_attack board false true
         | step (BuildingAttack ([], _, next)) =
           step $ next board
         | step (BuildingAttack (x::xs, regs, next)) =
