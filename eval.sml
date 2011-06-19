@@ -132,7 +132,7 @@ struct
 
       fun setVit vits hdiff idx newvit =
           let val oldvit = IntMap.look' (!vits) idx
-              val _ = IntMap.bind (!vits) idx newvit
+              val _ = vits := IntMap.bind (!vits) idx newvit
               val zombified = newvit = ~1
               val _ = hdiff := IntMap.bind (!hdiff) idx
                   (case IntMap.look (!hdiff) idx
