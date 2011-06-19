@@ -149,24 +149,25 @@ in
       *     end *)
      fun shiftInt dest n = shift dest (encode n)
 
-     (* A fast, constant-space loader.
-      *
-      * Loads a combinator using a modified version of sully's algorithm. Allocates temporary slots
-      * to build numbers when building them via shift would take longer than building them in a temp
-      * and loading it.
-      *
-      * TODO: should take game state and determine whether it needs to load I into dest.
-      *)
-     fun loadFast (dest : slotno) (expr : comb) : move list =
+     fun loadFastWithTemp (temp : slotno option) (dest : slotno) (expr : comb) : move list =
          let val () = checkExpr expr
              fun left x = L x dest
              val right = R dest
+
              (* right-applies a number into dest, using temps if necessary *)
+             fun shiftInt n =
+                 let val shiftEncode = shift dest (encode n)
+                 in case temp
+                     of NONE => shiftEncode
+                      | SOME tempSlot => 
+                        minBy length shiftEncode $
+                        int tempSlot n @ shift dest (CApp (%CGet, encode tempSlot))
+                 end
 
              (* right-applies an expression into dest *)
              fun shift (% c) = [right c]
                | shift (CApp (e1, e2)) = [left CK, left CS] @ shift e1 @ shift e2
-               | shift (CVal v) = shiftInt dest v
+               | shift (CVal v) = shiftInt v
 
              (* loads an expression into dest, assuming dest contains I. *)
              fun load (% c) = [right c]
@@ -175,6 +176,16 @@ in
                | load (CVal v) = intFast dest v
          in load expr
          end
+
+     (* A fast, constant-space loader.
+      *
+      * Loads a combinator using a modified version of sully's algorithm. Allocates temporary slots
+      * to build numbers when building them via shift would take longer than building them in a temp
+      * and loading it.
+      *
+      * TODO: should take game state and determine whether it needs to load I into dest.
+      *)
+     fun loadFast (dest : slotno) (expr : comb) : move list = loadFastWithTemp NONE dest expr
 
      fun load dest expr = L CInc dest (* make sure dest contains I *) :: loadFast dest expr
 

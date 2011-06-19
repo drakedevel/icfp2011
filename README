@@ -5,15 +5,15 @@ A phrenologist, an astrologist, and a eugenicist form a band. What is the band c
 |  _ \ / _` |/ _` | \___ \ / __| |/ _ \ '_ \ / __/ _ \
 | |_) | (_| | (_| |  ___) | (__| |  __/ | | | (_|  __/
 |____/ \__,_|\__,_| |____/ \___|_|\___|_| |_|\___\___|
- o Marty Rosenberg
- o Michael Sullivan
- o Michael Arntzenius
- o Matthew Maurer
- o Andrew Drake
- o Ryan Pearl
- o Jacob Potter
+ o Marty Rosenberg    (mjrosenb)
+ o Michael Sullivan   (sully)
+ o Michael Arntzenius (rntz)
+ o Matthew Maurer     (maurer_)
+ o Andrew Drake       (adrake)
+ o Ryan Pearl         (rpearl)
+ o Jacob Potter       (j4cbo)
 
-Source diving:
+Source diving (rebreather not included):
     - monad.sml 
         of *course* SML has monadic computation.
         Please see IO.unsafePerformIO
@@ -21,17 +21,17 @@ Source diving:
         There is nothing important to say about this file.
         Please see magic : real -> real. We are serious. 
     - super.sml
-        A supercomlliding supercompiler.
+        A supercolliding supercompiler.
         Please proceed quickly to the end of the structure. 
         Prolonged exposure to the compiler is not a part of this competition.
     - int-map.sml
         This file does not work. Can YOU spot why?
     - terms.sml
         Do not meddle in the affairs of wizards, for they are subtle and quick to anger.
-	- utlc-ski-compile.sml
-		Slaloming down the lambda hills.
-	- top.sml
-		We just derived bottom all over your repository!
+    - utlc-ski-compile.sml
+        Slaloming down the lambda hills.
+    - top.sml
+        We just derived bottom all over your repository!
     - analysis.sml
         The least terrifying file in this codebase.
 
