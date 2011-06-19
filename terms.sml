@@ -86,26 +86,26 @@ in
 
   fun gun n f = ski (S ? (K ? f) ? ((S ? (K ? %CGet) ? (K ? EVal n))))
 
-  fun make_spin n x = 
-      let
-          val alloc = Allocator.new ();
-          val _ = Allocator.use alloc n in
-          Load.load alloc n (spin n x)
-      end
-  val nyan_cat = make_spin 0 (%CDec)
-  val volcanic =
-      let
-          val a = Allocator.new ();
-          val gr = Allocator.alloc a;
-          val sr = Allocator.alloc a;
-          val tr = Allocator.alloc a;
-          val gun_arg = (S ? (%CGet) ? ((S ? (K ? %CGet) ? (K ? EVal tr))))
-          val gun = ski (S ? (K ? gun_arg) ? ((K ? EVal sr)))
-          val gun' =  Load.load a gr gun
-          val volc = Load.load a sr (spin sr (%CDec))
-      in
-          (tr, gun' @ volc)
-      end
+  (* fun make_spin n x = 
+   *     let
+   *         val alloc = Allocator.new ();
+   *         val _ = Allocator.use alloc n in
+   *         Load.load alloc n (spin n x)
+   *     end
+   * val nyan_cat = make_spin 0 (%CDec)
+   * val volcanic =
+   *     let
+   *         val a = Allocator.new ();
+   *         val gr = Allocator.alloc a;
+   *         val sr = Allocator.alloc a;
+   *         val tr = Allocator.alloc a;
+   *         val gun_arg = (S ? (%CGet) ? ((S ? (K ? %CGet) ? (K ? EVal tr))))
+   *         val gun = ski (S ? (K ? gun_arg) ? ((K ? EVal sr)))
+   *         val gun' =  Load.load a gr gun
+   *         val volc = Load.load a sr (spin sr (%CDec))
+   *     in
+   *         (tr, gun' @ volc)
+   *     end *)
 
   val snipe =
       S  ?(S ? (S ? (%CAttack ? (%CSucc ? (%CGet ? EVal 1))) ? (K ? (%CGet ? EVal 0))) ? 
