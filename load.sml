@@ -143,7 +143,7 @@ in
                                       shift dest (CApp (%CGet, encode i)))
          in minBy length shiftEncode tempShift
          end
-     (* fun shiftInt _ dest n = shift dest (encode n) *)
+     fun shiftInt _ dest n = shift dest (encode n)
 
      fun loadDumb d (% c) = [R d c]
        | loadDumb d (CVal v) = int d v
