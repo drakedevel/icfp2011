@@ -56,13 +56,13 @@ sig
    *)
   (* val run_move_and_swap : LTG.board -> move -> LTG.comb option * diff *)
 
-  (* run_move LTG.board move ==> result
+  (* run_move_old LTG.board move ==> result
    *
    * Returns (SOME result) or NONE on error.
    *
    * XXX DO NOT USE, does not allow you to react to zombies
    *)
-  val run_move : LTG.board -> move -> LTG.comb option
+  val run_move_old : LTG.board -> move -> LTG.comb option
 
   (* run_moves LTG.board moves ==> ()
    *
@@ -245,11 +245,11 @@ struct
           val () = up f slot_num $ getOpt (result, %CI)
       in (result, diff) end
 
-  fun run_move board move =
-      (Print.esay "WARN: run_move invoked; DEPRECATED"; (* see sig *)
+  fun run_move_old board move =
+      (Print.esay "WARN: run_move_old invoked; DEPRECATED"; (* see sig *)
        run_zombies board;
        first $ play_card board move)
 
-  (* fun run_moves board moves = List.app (ignore o run_move board) moves *)
+  (* fun run_moves board moves = List.app (ignore o run_move_old board) moves *)
 
 end
