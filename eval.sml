@@ -1,54 +1,54 @@
 signature DIFF =
 sig
   (* represents what changed during an evaluation. *)
-  type diff
+  type t
 
-  val diff_empty : diff
+  val empty : t
 
   (* changes which side a diff is being viewed from. *)
-  val diff_flip : diff -> diff
+  val flip : t -> t
 
   (* combines two diffs. *)
-  val diff_combine : diff -> diff -> diff
+  val combine : t -> t -> t
 
   (* killed (ours, theirs) *)
-  val diff_killed : diff -> LTG.slotno list * LTG.slotno list
+  val killed : t -> LTG.slotno list * LTG.slotno list
 
-  (* zombified (ours, theirs) *)
-  val diff_cleared : diff -> LTG.slotno list * LTG.slotno list
+  (* cleared (ours, theirs) *)
+  val cleared : t -> LTG.slotno list * LTG.slotno list
 end
 
 signature EVALUATOR =
 sig
-  include DIFF
-
   type move = LTG.app_dir * LTG.card * LTG.slotno
   val move : LTG.app_dir -> LTG.card -> LTG.slotno -> move (* smart ctor for moves *)
   val L : LTG.card -> LTG.slotno -> move               (* left app *)
   val R : LTG.slotno -> LTG.card -> move               (* right app *)
 
+  structure Diff : DIFF
+
   val switch_teams : LTG.board -> LTG.board
 
   (* evaluates, modifying a given diff appropriately *)
-  val evalWithDiff : LTG.board -> LTG.comb -> bool -> diff ref -> LTG.comb option
+  val evalWithDiff : LTG.board -> LTG.comb -> bool -> Diff.t ref -> LTG.comb option
 
   (* eval LTG.board K is_zombie ==> result
    *
    * evaluates LTG.combinator K in LTG.board. acts like a zombie iff is_zombie is true. Returns
    * (SOME result) or NONE on error, tupled with the diff.
    *)
-  val eval : LTG.board -> LTG.comb -> bool -> LTG.comb option * diff
+  val eval : LTG.board -> LTG.comb -> bool -> LTG.comb option * Diff.t
 
   (* run_zombies LTG.board ==> ()
    *
    * Runs all zombies on the LTG.board. Use before turn. *)
-  val run_zombies : LTG.board -> diff
+  val run_zombies : LTG.board -> Diff.t
 
   (* play_card board move ==> (result, diff)
    *
    * Use run_zombies before this.
    *)
-  val play_card : LTG.board -> move -> LTG.comb option * diff
+  val play_card : LTG.board -> move -> LTG.comb option * Diff.t
 
   (* run_move_and_swap board move ==> (result, diff)
    *
@@ -95,21 +95,24 @@ struct
   fun switch_teams (B {f, v, f', v'}) = B {f=f', v=v', v'=v, f'=f}
 
   (* diff - Maps slotnumber to (old vitality, new vitality, changed field value). *)
-  type halfdiff = (vitality * vitality * bool) IntMap.map
-  type diff = halfdiff * halfdiff
+  structure Diff : DIFF =
+  struct
+    type halfdiff = (vitality * vitality * bool) IntMap.map
+    type t = halfdiff * halfdiff
 
-  val diff_empty : diff = (IntMap.empty, IntMap.empty)
-  fun diff_flip ((x,y) : diff) : diff = (y,x)
-  fun diff_combine ((x1,x2) : diff) ((y1,y2) : diff) : diff =
-      let fun combine ((oldvit, _, changed1), (_, newvit, changed2)) =
-              (oldvit, newvit, changed1 orelse changed2)
-      in mapBoth (IntMap.unionWith combine) ((x1,y1),(x2,y2))
-      end
+    val empty : t = (IntMap.empty, IntMap.empty)
+    fun flip ((x,y) : t) : t = (y,x)
+    fun combine ((x1,x2) : t) ((y1,y2) : t) : t =
+        let fun combine ((oldvit, _, changed1), (_, newvit, changed2)) =
+                (oldvit, newvit, changed1 orelse changed2)
+        in mapBoth (IntMap.unionWith combine) ((x1,y1),(x2,y2))
+        end
 
-  fun keysFilter p = IntMap.keys o IntMap.filter p
+    fun keysFilter p = IntMap.keys o IntMap.filter p
 
-  fun diff_killed (x : diff) = mapBoth (keysFilter (fn (_,newv,_) => newv <= 0)) x
-  fun diff_cleared (x : diff) = mapBoth (keysFilter (fn (_,_,cleared) => cleared)) x
+    fun killed (x : t) = mapBoth (keysFilter (fn (_,newv,_) => newv <= 0)) x
+    fun cleared (x : t) = mapBoth (keysFilter (fn (_,_,cleared) => cleared)) x
+  end
 
   (* smart ctor for moves *)
   fun move app_dir card slotno : move =
@@ -124,8 +127,8 @@ struct
   fun evalWithDiff (B {f, v, f', v'}) expr zombie diff = let
       (* maps from slots to old vitalities *)
       val ref (ours, theirs) = diff
-      val changesOurs : halfdiff ref = ref ours
-      val changesTheirs : halfdiff ref = ref theirs
+      val changesOurs = ref ours
+      val changesTheirs = ref theirs
 
       fun setVit vits hdiff idx newvit =
           let val oldvit = IntMap.look' (!vits) idx
@@ -216,14 +219,14 @@ struct
   end
 
   fun eval board comb isZombie =
-      let val diff = ref diff_empty
+      let val diff = ref Diff.empty
           val result = evalWithDiff board comb isZombie diff
       in (result, !diff)
       end
 
   (* To be run before a turn. Runs all of the zombies *)
   fun run_zombies (board as B{f,v,...}) =
-      let val diff = ref diff_empty
+      let val diff = ref Diff.empty
           fun handle_zombie (i, ~1) =
               (evalWithDiff board (CApp (f !! i, %CI)) true diff;
                up f i $ %CI;
@@ -235,7 +238,7 @@ struct
   fun play_card (board as B{f,v,...}) (direction, card, slot_num) =
       let val slot = f !! slot_num
           val (result, diff) =
-              if is_dead $ v !! slot_num then (NONE, diff_empty) else
+              if is_dead $ v !! slot_num then (NONE, Diff.empty) else
               (eval board (case direction of
                                         LeftApp => CApp (%% card, slot)
                                       | RightApp => CApp (slot, %% card)) false)
