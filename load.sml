@@ -30,7 +30,7 @@ in
    * slots we are otherwising using *)
   structure Allocator : ALLOCATOR =
   struct
-    val ass_random = Random.rand(0xFE0F, 0xF00F)
+    val ass_random = Random.rand (Int.fromLarge (LargeInt.mod ((Time.toMicroseconds (Time.now ())), LargeInt.fromInt (valOf Int.maxInt))), 0xF00F)
     structure IM = IntMap (* sets don't have firsti; argh. *)
 
     exception OOM
