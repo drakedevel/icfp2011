@@ -10,6 +10,7 @@ sig
   (* raises OOM /before/ allocating anything if would overflow. *)
   val allocMany : allocr -> int -> LTG.slotno list
   val free : allocr -> LTG.slotno -> unit
+  val update : allocr -> LTG.board -> unit
   val withSlot : allocr -> (LTG.slotno -> 'a) -> 'a
   val aslr : allocr -> allocr
   val cheap : allocr -> allocr
@@ -34,46 +35,47 @@ in
 
     exception OOM
     exception AlreadyInUse
-    type allocr = ((unit IM.map ref) * bool) (* free list, aslr *)
+    type allocr = ((unit IM.map ref) * (unit IM.map ref) * bool) (* live list, free list, aslr *)
     
-    fun add (S, _) x = IM.bind S x ()
+    fun add S x = IM.bind S x ()
 
-    fun new () = (ref $ foldl (fn (i, S) => add (S, false) i) IM.empty $ upto
-      (max_slot+1), true)
+    fun new () = let val all =  foldl (fn (i, S) => add S i) IM.empty $ upto
+      (max_slot+1) in (ref all, ref all, true) end
       (* WARNING, in ASLR mode, an OOM condition will cause looping *)
-    fun aslr (m, _) = (m, true)
-    fun cheap (m, _) = (m, false)
-    fun copy (ref xs, v) = (ref xs, v)
+    fun aslr (z, m, _) = (z, m, true)
+    fun cheap (z, m, _) = (z, m, false)
+    fun copy (ref zs, ref xs, v) = (ref zs, ref xs, v)
     fun magic y = 166.503-0.000541462/(Math.pow ((~2.14896e~13+2.3966e~13 *
       y+2.3966e~13 * (Math.sqrt (0.804142+y * (y - 1.79334)))),
       (1.0/3.0)))+2.80815e6 * (Math.pow ((~2.14896e~13+2.3966e~13 * y+2.3966e~13
       * (Math.sqrt(0.804142+y * (y -1.79334)))), (1.0/3.0)))
     fun random_dist () = floor (magic (Random.randReal ass_random))
-    fun alloc (R as (S, mode)) =
+    fun alloc (R as (Z, S, mode)) =
       if mode
       then let val a = random_dist () in
-        if IM.has (!S) a
+        if IM.has (IM.intersectWith (fn (x, y) => x) ((!Z), (!S))) a
         then a
         else alloc R
            end
-      else case IM.firsti (!S) of
+      else case IM.firsti (IM.intersectWith (fn (x, y) => x) ((!Z), (!S))) of
                 NONE => raise OOM
               | SOME (x, ()) => (S := IM.delete (!S) x; x)
-    fun allocMany (R as (ref S, _)) n =
+    fun allocMany (R as (ref Z, ref S, _)) n =
         let fun take 0 = []
               | take n = alloc R :: take (n-1)
-        in if IM.count S < n then raise OOM
+        in if IM.count (IM.intersectWith (fn (x, y) => x) (Z, S)) < n then raise OOM
            else take n
         end
 
-    fun free (R as (S, _)) x = S := add ((!S), false) x
-
+    fun free (R as (_, S, _)) x = S := add (!S) x
+    fun update (Z, _, _) (B{v = ref vital,...}) = Z := IntMap.map (fn (x) => ()) (IntMap.filter (fn (x) => x >
+      0) vital)
     fun withSlot a f =
         let val s = alloc a
         in after f (free a) s
         end
 
-    fun use (a, _) slotno =
+    fun use (_, a, _) slotno =
         (if not (IM.has (!a) slotno) then raise AlreadyInUse else ();
          a := IM.delete (!a) slotno)
   end
