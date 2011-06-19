@@ -11,6 +11,8 @@ sig
   val allocMany : allocr -> int -> LTG.slotno list
   val free : allocr -> LTG.slotno -> unit
   val withSlot : allocr -> (LTG.slotno -> 'a) -> 'a
+  val aslr : allocr -> allocr
+  val cheap : allocr -> allocr
 end
 
 local
@@ -27,7 +29,7 @@ in
    * slots we are otherwising using *)
   structure Allocator : ALLOCATOR =
   struct
-    val ass_random = Random.rand(0xFEEF, 0xF00F)
+    val ass_random = Random.rand(0xFE0F, 0xF00F)
     structure IM = IntMap (* sets don't have firsti; argh. *)
 
     exception OOM
@@ -37,7 +39,7 @@ in
     fun add (S, _) x = IM.bind S x ()
 
     fun new () = (ref $ foldl (fn (i, S) => add (S, false) i) IM.empty $ upto
-      (max_slot+1), false)
+      (max_slot+1), true)
       (* WARNING, in ASLR mode, an OOM condition will cause looping *)
     fun aslr (m, _) = (m, true)
     fun cheap (m, _) = (m, false)

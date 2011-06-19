@@ -120,7 +120,8 @@ in
           val a = Allocator.new ();
           (*steal 0, so it does not hurt when they snipe it*)
           val _ =  Allocator.alloc a;
-          val gr = Allocator.alloc a;
+          val gr = 1
+          val _ = Allocator.use a gr;
           val sr = Allocator.alloc a;
           val target_reg = Allocator.alloc a;
           val snipe_reg = Allocator.alloc a;
