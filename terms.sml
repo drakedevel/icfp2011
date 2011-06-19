@@ -105,6 +105,7 @@ in
   fun load e = Load.load (Allocator.new ()) 0 e
   fun load_n e n = Load.load (Allocator.new ()) n e
   val load' = load o ski
+  fun load'_n e n = load_n (ski e) n
   fun n_cats n = repeat_lam ? ((repeat_n n) ? (thunk $ seqL $ map dec_n [0, 1,
     42]))
 
