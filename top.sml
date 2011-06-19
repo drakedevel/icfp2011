@@ -10,8 +10,7 @@ struct
 
   datatype state_change = SDied | SRevived | SNothing
 
-  val board = build_board ()    (* fuckit *)
-  val allocator = Allocator.new board
+  val allocator = Allocator.new ()
   structure M = Allocator
   structure A = Analysis
   structure Diff = Evaluator.Diff
@@ -25,8 +24,8 @@ struct
   fun allocHealthy a (B{v,...}) n = M.allocFilter (fn i => (v !! i) > n) a
   val threshold = 8192
 
-  val loadInt = Load.int allocator
-  val load = Load.load allocator
+  val loadInt = Load.int
+  val load = Load.load
 
   fun is_zombo_killable i = i > threshold
 
@@ -46,8 +45,8 @@ struct
 
       val shoot = R reload_reg CZero
       fun continue_snipe _ = 
-          RunningAttack (loadInt tr 66 @ [shoot, L CDbl tr, shoot]
-                         @ loadInt tr (66*3) @ [shoot], regs, wonton_snipe (regs,reload_reg,tr))
+          RunningAttack (Load.int tr 66 @ [shoot, L CDbl tr, shoot] 
+                         @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe (regs,reload_reg,tr))
       fun load_resnipe _ = BuildingAttack (reload, regs, continue_snipe)
       fun pull_trigger _ = RunningAttack ([R snipe CZero], regs, load_resnipe)
 
@@ -109,7 +108,7 @@ struct
          raise Fail "Fuck God Dead"
       end
       fun main (name, args) = 
-          let (* val board = build_board () *)
+          let val board = build_board ()
               val state = {state = Start, analysis = A.init_state}
           in
               case args of

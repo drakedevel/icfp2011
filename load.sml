@@ -3,7 +3,7 @@ sig
   exception OOM
   exception AlreadyInUse
   type allocr                   (* allocator *)
-  val new : LTG.board -> allocr
+  val new : unit -> allocr
   val copy : allocr -> allocr
   val allocFilter : (LTG.slotno -> bool) -> allocr -> LTG.slotno
   val alloc : allocr -> LTG.slotno
@@ -16,7 +16,6 @@ sig
   val withSlot : allocr -> (LTG.slotno -> 'a) -> 'a
   val aslr : allocr -> allocr
   val cheap : allocr -> allocr
-  val board : allocr -> LTG.board
 end
 
 local
@@ -38,27 +37,22 @@ in
 
     exception OOM
     exception AlreadyInUse
-    type allocr = ((unit IM.map ref) * (unit IM.map ref) * bool * board) (* live list, free list, aslr *)
-
+    type allocr = ((unit IM.map ref) * (unit IM.map ref) * bool) (* live list, free list, aslr *)
+    
     fun add S x = IM.bind S x ()
 
-    fun new b = let val all =  foldl (fn (i, S) => add S i) IM.empty $ upto
-      (max_slot+1) in (ref all, ref all, true, b) end
+    fun new () = let val all =  foldl (fn (i, S) => add S i) IM.empty $ upto
+      (max_slot+1) in (ref all, ref all, true) end
       (* WARNING, in ASLR mode, an OOM condition will cause looping *)
-
-    fun aslr (z, m, _, b) = (z, m, true, b)
-    fun cheap (z, m, _, b) = (z, m, false, b)
-    fun copy (ref zs, ref xs, v, b) =
-        (Print.esay "WARNING: copying allocator";
-         (ref zs, ref xs, v, b))
-
+    fun aslr (z, m, _) = (z, m, true)
+    fun cheap (z, m, _) = (z, m, false)
+    fun copy (ref zs, ref xs, v) = (ref zs, ref xs, v)
     fun magic y = 166.503-0.000541462/(Math.pow ((~2.14896e~13+2.3966e~13 *
       y+2.3966e~13 * (Math.sqrt (0.804142+y * (y - 1.79334)))),
       (1.0/3.0)))+2.80815e6 * (Math.pow ((~2.14896e~13+2.3966e~13 * y+2.3966e~13
       * (Math.sqrt(0.804142+y * (y -1.79334)))), (1.0/3.0)))
-
     fun random_dist () = floor (magic (Random.randReal ass_random))
-    fun allocFilter f (R as (Z, S, mode, _)) =
+    fun allocFilter f (R as (Z, S, mode)) =
       if mode
       then let val a = random_dist () in
         if (IM.has (IM.intersectWith (fn (x, y) => x) ((!Z), (!S))) a) andalso
@@ -70,30 +64,26 @@ in
       (!S)))) of
                 NONE => raise OOM
               | SOME (x, ()) => (S := IM.delete (!S) x; x)
-
     fun alloc m = allocFilter (fn (_) => true) m
-    fun allocMany (R as (ref Z, ref S, _, _)) n =
+    fun allocMany (R as (ref Z, ref S, _)) n =
         let fun take 0 = []
               | take n = alloc R :: take (n-1)
         in if IM.count (IM.intersectWith (fn (x, y) => x) (Z, S)) < n then raise OOM
            else take n
         end
 
-    fun free (R as (_, S, _, _)) x = S := add (!S) x
+    fun free (R as (_, S, _)) x = S := add (!S) x
     fun freeMany R = List.app (free R)
-    fun update (Z, _, _, _) (B{v = ref vital,...}) =
-        Z := IntMap.map (fn (x) => ()) (IntMap.filter (fn (x) => x > 0) vital)
-
-    fun withSlot (a : allocr) f =
+    fun update (Z, _, _) (B{v = ref vital,...}) = Z := IntMap.map (fn (x) => ()) (IntMap.filter (fn (x) => x >
+      0) vital)
+    fun withSlot a f =
         let val s = alloc a
         in after f (free a) s
         end
 
-    fun use (_, a, _, _) slotno =
+    fun use (_, a, _) slotno =
         (if not (IM.has (!a) slotno) then raise AlreadyInUse else ();
          a := IM.delete (!a) slotno)
-
-    fun board (_,_,_,b) = b
   end
 
   (* these are dumb loader functions.
@@ -115,14 +105,10 @@ in
     fun opsForInt n = intercalate [CDbl] $ map (fn true => [CSucc] | false => []) $ toBinary n
     val numOpsForInt = length o opsForInt (* FIXME don't need to construct list *)
 
-    fun putIfNecessary (B {f,v,f',v'}) dest : move list =
-        case IntMap.look' (!f) dest of %CI => [] | _ => [L CInc dest]
-
     (* generates a sequence of moves to store v into dest *)
     fun intFast dest v = R dest CZero :: map (fn c => L c dest) (opsForInt v)
     (* note: inc is strictly better than put *)
-    fun int (a : Allocator.allocr) (dest : slotno) (v : value) : move list =
-        L CInc dest :: intFast dest v
+    fun int (dest : slotno) (v : value) : move list = L CInc dest :: intFast dest v
 
     (* basically the same as above, but as only one function, and returning
      * the comb that computes the value, rather than the move list, since the
@@ -171,7 +157,7 @@ in
       *
       * TODO: should take game state and determine whether it needs to load I into dest.
       *)
-     fun loadFast (A : Allocator.allocr) (dest : slotno) (expr : comb) : move list =
+     fun loadFast (dest : slotno) (expr : comb) : move list =
          let val () = checkExpr expr
              fun left x = L x dest
              val right = R dest
@@ -190,7 +176,7 @@ in
          in load expr
          end
 
-     fun load A dest expr = L CInc dest (* make sure dest contains I *) :: loadFast A dest expr
+     fun load dest expr = L CInc dest (* make sure dest contains I *) :: loadFast dest expr
 
   end
 
