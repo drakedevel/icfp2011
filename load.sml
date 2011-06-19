@@ -5,6 +5,7 @@ sig
   type allocr                   (* allocator *)
   val new : unit -> allocr
   val copy : allocr -> allocr
+  val allocFilter : (LTG.slotno -> bool) -> allocr -> LTG.slotno
   val alloc : allocr -> LTG.slotno
   val use : allocr -> LTG.slotno -> unit
   (* raises OOM /before/ allocating anything if would overflow. *)
@@ -51,7 +52,6 @@ in
       (1.0/3.0)))+2.80815e6 * (Math.pow ((~2.14896e~13+2.3966e~13 * y+2.3966e~13
       * (Math.sqrt(0.804142+y * (y -1.79334)))), (1.0/3.0)))
     fun random_dist () = floor (magic (Random.randReal ass_random))
-    fun alloc m = allocFilter (fn (_) => true) m
     fun allocFilter f (R as (Z, S, mode)) =
       if mode
       then let val a = random_dist () in
@@ -60,10 +60,11 @@ in
         then a
         else allocFilter f R
            end
-      else case IM.firsti (IM.filter f (IM.intersectWith (fn (x, y) => x) ((!Z),
+      else case IM.firsti (IM.filteri (fn (x, y) => f x) (IM.intersectWith (fn (x, y) => x) ((!Z),
       (!S)))) of
                 NONE => raise OOM
               | SOME (x, ()) => (S := IM.delete (!S) x; x)
+    fun alloc m = allocFilter (fn (_) => true) m
     fun allocMany (R as (ref Z, ref S, _)) n =
         let fun take 0 = []
               | take n = alloc R :: take (n-1)
