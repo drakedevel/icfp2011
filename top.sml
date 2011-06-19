@@ -25,13 +25,10 @@ struct
 
   (* Let's fire off a job... *)
   fun wonton_snipe (regs,reload_reg,tr) (B {v'=v',v=v,...}) =
-      let
-          val SOME (slot,vit) = 
-              LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v'))
-          val _ = Print.esay ("found: "^Int.toString slot ^ " with value: "^ Int.toString vit);
-      in
-          RunningAttack (Load.int tr slot @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
-      end
+  case LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v')) of
+      SOME (slot,vit) =>
+      RunningAttack (Load.int tr slot @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
+    | NONE => RunningAttack (Load.int tr 0 @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
 
   fun build_attack b random old  = let
       val a = if random andalso not old then allocator else Allocator.cheap allocator
@@ -97,9 +94,9 @@ struct
   in
       fun takedown_main (name, args) =
       let val _ = if args = ["1"] then ignore (ReaderWriter.get_move ()) else ()
-        val moves = (Terms.take_him_down 2) @ (Terms.take_him_down 3) @
-      (Terms.take_him_down 4) @ (Terms.take_him_down
-          0) @ (Util.replicate 100000 (Evaluator.L LTG.CI 72))
+        val a = Allocator.new ()
+        val moves = (Terms.take_him_down a 2) @ (Terms.take_him_down a 3) @
+        (Terms.take_him_down a 4) @ (Util.replicate 100000 (Evaluator.L LTG.CI 72))
       in map (fn x => (ReaderWriter.put_move x; ReaderWriter.get_move ()))
       moves; raise Fail "Fuck God Dead"
       end
