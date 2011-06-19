@@ -110,12 +110,9 @@ in
    *     end *)
   fun fetch n = thunk (%CGet ? EVal n)
   (*fastload, don't bother to left-apply CPut*)
-  fun fint reg x = List.tl (Load.int reg x)
-  fun durka_durka self target = ski ((%CAttack ? (EVal self) ? (EVal target) ? (EVal
-    9999)))
-  fun take_him_down target = let
-    val a = Allocator.new ()
-    val _ = Allocator.use a 0
+  fun stupid_durka a durka = Load.load a durka (ski (%CAttack ? (EVal durka) ? (EVal 0) ? (EVal 10000)))
+  fun durka_durka self target = ski ((%CAttack ? (EVal self) ? (EVal target) ? (EVal 9999)))
+  fun take_him_down a target = let
     val sac = Allocator.alloc a
     val sac' = Allocator.alloc a
     in (Load.load a sac (durka_durka sac target)) @ (Load.load a sac'
@@ -151,7 +148,7 @@ in
             | rep n x = x::rep (n-1) x
       in
           ((snipe_reg, target_reg, reshoot_reg, yield_reg),
-           snipe @ volc @ gun' @Load.int target_reg 0, reshooter,
+           snipe @ volc @ gun' @Load.int a target_reg 0, reshooter,
            [d1, d2, snipe_reg, target_reg, yield_reg, reshoot_reg, gr, sr])
       end
 
@@ -162,27 +159,29 @@ in
   fun zombocanic_old a =
       let
           val a = Allocator.cheap a
+          val load = Load.load a
           val (L,R) = (Evaluator.L,Evaluator.R)
-          val gr = Allocator.alloc a         (*0*)
-          val sr = Allocator.alloc a         (*1*)
-          val target_reg = Allocator.alloc a (*2*)
-          val snipe_reg = Allocator.alloc a  (*3*)
+          fun use n = n before Allocator.use a n
+          val gr = use 0         (*0*)
+          val sr = use 1         (*1*)
+          val target_reg = use 2 (*2*)
+          val snipe_reg = use 3  (*3*)
           (*val reshoot_reg = Allocator.alloc a;*)
-          val reshooter = Load.load a snipe_reg (reshoot snipe_reg (S ? %CZombie ? %CGet))
-          val snipe = Load.load a snipe_reg (ski snipe_old)
+          val reshooter = load snipe_reg (reshoot snipe_reg (S ? %CZombie ? %CGet))
+          val snipe = load snipe_reg (ski snipe_old)
           (*ugh. this is inside out.  the EVal sr gets passed in as
            * the first argument to leftmost Copy
            *)
           val gun_arg = (S ? (%CCopy(*sr*)) ? ((S ? (K ? %CCopy) ? (K ? EVal target_reg))))
           val gun = ski (S ? (K ? gun_arg) ? ((K ? EVal sr)))
-          val gun' =  Load.load a gr gun
-          val volc = Load.load a sr (spin' sr (S?(S? %CHelp?I)?(K?(%CGet ? EVal 0))))
+          val gun' =  load gr gun
+          val volc = load sr (spin' sr (S?(S? %CHelp?I)?(K?(%CGet ? EVal 0))))
           fun rep 0 _ = []
             | rep n x = x::rep (n-1) x
       in
           ((snipe_reg, target_reg, snipe_reg, ~1),
-           fint 0 8 @ [R 1 CGet, R 1 CZero] @ rep 10 (L CDbl 0) @
-           snipe @ volc @ gun' @fint target_reg 0, reshooter,
+           Load.int a 0 8 @ [R 1 CGet, R 1 CZero] @ rep 10 (L CDbl 0) @
+           snipe @ volc @ gun' @ Load.int a target_reg 0, reshooter,
           [8, 9, gr,sr,target_reg,snipe_reg])
       end
 end

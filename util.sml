@@ -125,5 +125,19 @@ struct
 
   fun containsBy f x l = List.exists (fn y => f (x, y)) l
   fun contains x l = containsBy (op =) x l
+
+  fun sequenceLengths f l =
+      let fun loop [] _ = []
+            | loop (x::xs) n =
+              if f x then (n+1) :: loop xs (n+1)
+              else 0 :: loop xs 0
+      in rev (loop (rev l) 0) end
+
+  fun max_elem _ nil = NONE
+    | max_elem cmp l =
+      SOME (
+      foldl1 (fn ((i, x), (i', x')) =>
+                 if cmp (x, x') = GREATER then (i, x) else (i', x'))
+             (enumerate l))
   
 end
