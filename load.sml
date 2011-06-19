@@ -1,6 +1,7 @@
 signature ALLOCATOR =         (* imperative *)
 sig
   exception OOM
+  exception AlreadyInUse
   type allocr                   (* allocator *)
   val new : unit -> allocr
   val copy : allocr -> allocr
@@ -29,6 +30,7 @@ in
     structure IM = IntMap (* sets don't have firsti; argh. *)
 
     exception OOM
+    exception AlreadyInUse
     type allocr = unit IM.map ref (* free list *)
 
     fun add S x = IM.bind S x ()
@@ -55,7 +57,9 @@ in
         in after f (free a) s
         end
 
-    fun use a x = a := IM.delete (!a) x
+    fun use a slotno =
+        (if IM.has (!a) slotno then raise AlreadyInUse else ();
+         a := IM.delete (!a) slotno)
   end
 
   (* these are dumb loader functions.
@@ -79,7 +83,8 @@ in
 
     (* generates a sequence of moves to store v into dest *)
     fun intNoPut dest v = R dest CZero :: map (fn c => L c dest) (opsForInt v)
-    fun int (dest : slotno) (v : value) : move list = L CPut dest :: intNoPut dest v
+    (* note: inc is strictly better than put *)
+    fun int (dest : slotno) (v : value) : move list = L CInc dest :: intNoPut dest v
 
     (* basically the same as above, but as only one function, and returning
      * the comb that computes the value, rather than the move list, since the
@@ -118,7 +123,7 @@ in
                                       shift dest (CApp (%CGet, encode i)))
          in minBy length shiftEncode tempShift
          end
-     fun shiftInt _ dest n = shift dest (encode n)
+     (* fun shiftInt _ dest n = shift dest (encode n) *)
 
      fun loadDumb d (% c) = [R d c]
        | loadDumb d (CVal v) = int d v
@@ -149,7 +154,7 @@ in
                | load (CApp (%c, e)) = load e @ [left c]  (* optimization *)
                | load (CApp (e1, e2)) = load e1 @ shift e2
                | load (CVal v) = intNoPut dest v
-         in left CPut (* load I into dest *) :: load expr
+         in left CInc (* load I into dest *) :: load expr
          end
 
   end

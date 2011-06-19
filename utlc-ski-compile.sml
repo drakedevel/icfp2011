@@ -65,6 +65,7 @@ struct
       | containsVar v (% c) = false
 
     fun peep (%CS CApp %CK CApp %_) = %CI
+      | peep (e as %CK CApp ignored CApp result) = if is_pure ignored then result else e
       | peep (%CS CApp (%CK CApp %x) CApp %CI) = %x
       | peep (%CK CApp %CI) = %CPut
       | peep (e as %CPut CApp exp) = if is_pure exp
@@ -75,9 +76,6 @@ struct
       | peep (%CI CApp x) = x
       | peep x = x
 
-  end
-
-  local val % = L.% in
     fun bracket' x c =
         (* TODO running containsVar andalso is_pure at every level is unnecessary. *)
         if not (containsVar x c) andalso is_pure c then %L.CK @ c else
