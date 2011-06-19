@@ -58,14 +58,19 @@ struct
       val (dead , _) = Diff.cleared diff
       val bring_out_yer_dead = List.filter (flip contains $ dead)
 
+      (* ignoring our attack regs doesn't really work *)
+      fun check_attack_regs regs = not $ null $ bring_out_yer_dead $ List.drop (regs, 2)
+      fun restart_attack regs = (frees regs; step $ build_attack board true false)
 
-      fun step (Start) = step $ build_attack board false true
+      and step (Start) = step $ build_attack board false true
         | step (BuildingAttack ([], _, next)) =
           step $ next board
         | step (BuildingAttack (x::xs, regs, next)) =
+          if check_attack_regs regs then restart_attack regs else
           (x, BuildingAttack (xs, regs, next))
 
         | step (RunningAttack (x::xs, regs, next)) =
+          if check_attack_regs regs then restart_attack regs else
           (x, RunningAttack(xs, regs, next))
         | step (RunningAttack ([], _, next)) =
           step $ next board
