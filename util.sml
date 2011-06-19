@@ -44,6 +44,9 @@ struct
 
   fun minBy f x y = case Int.compare (f x, f y) of GREATER => y | _ => x
 
+  fun mapBoth f (x,y) = (f x, f y)
+  fun apBoth (f,g) (x,y) = (f x, g y)
+
   (* TODO: make this tail-recursive *)
   fun intersperse _ [] = []
     | intersperse _ [x] = [x]
