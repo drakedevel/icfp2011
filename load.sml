@@ -11,6 +11,8 @@ sig
   val allocMany : allocr -> int -> LTG.slotno list
   val free : allocr -> LTG.slotno -> unit
   val withSlot : allocr -> (LTG.slotno -> 'a) -> 'a
+  val aslr : allocr -> allocr
+  val cheap : allocr -> allocr
 end
 
 local
@@ -27,37 +29,51 @@ in
    * slots we are otherwising using *)
   structure Allocator : ALLOCATOR =
   struct
+    val ass_random = Random.rand(0xFE0F, 0xF00F)
     structure IM = IntMap (* sets don't have firsti; argh. *)
 
     exception OOM
     exception AlreadyInUse
-    type allocr = unit IM.map ref (* free list *)
+    type allocr = ((unit IM.map ref) * bool) (* free list, aslr *)
+    
+    fun add (S, _) x = IM.bind S x ()
 
-    fun add S x = IM.bind S x ()
-
-    fun new () = ref $ foldl (fn (i, S) => add S i) IM.empty $ upto (max_slot+1)
-    fun copy (ref xs) = ref xs
-
-    fun alloc (R as ref S) =
-        case IM.firsti S of
-            NONE => raise OOM
-          | SOME (x, ()) => (R := IM.delete S x; x)
-
-    fun allocMany (R as ref S) n =
+    fun new () = (ref $ foldl (fn (i, S) => add (S, false) i) IM.empty $ upto
+      (max_slot+1), true)
+      (* WARNING, in ASLR mode, an OOM condition will cause looping *)
+    fun aslr (m, _) = (m, true)
+    fun cheap (m, _) = (m, false)
+    fun copy (ref xs, v) = (ref xs, v)
+    fun magic y = 166.503-0.000541462/(Math.pow ((~2.14896e~13+2.3966e~13 *
+      y+2.3966e~13 * (Math.sqrt (0.804142+y * (y - 1.79334)))),
+      (1.0/3.0)))+2.80815e6 * (Math.pow ((~2.14896e~13+2.3966e~13 * y+2.3966e~13
+      * (Math.sqrt(0.804142+y * (y -1.79334)))), (1.0/3.0)))
+    fun random_dist () = floor (magic (Random.randReal ass_random))
+    fun alloc (R as (S, mode)) =
+      if mode
+      then let val a = random_dist () in
+        if IM.has (!S) a
+        then a
+        else alloc R
+           end
+      else case IM.firsti (!S) of
+                NONE => raise OOM
+              | SOME (x, ()) => (S := IM.delete (!S) x; x)
+    fun allocMany (R as (ref S, _)) n =
         let fun take 0 = []
               | take n = alloc R :: take (n-1)
         in if IM.count S < n then raise OOM
            else take n
         end
 
-    fun free (R as ref S) x = R := add S x
+    fun free (R as (S, _)) x = S := add ((!S), false) x
 
     fun withSlot a f =
         let val s = alloc a
         in after f (free a) s
         end
 
-    fun use a slotno =
+    fun use (a, _) slotno =
         (if not (IM.has (!a) slotno) then raise AlreadyInUse else ();
          a := IM.delete (!a) slotno)
   end
