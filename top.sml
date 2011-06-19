@@ -33,7 +33,6 @@ struct
   fun zamboni _ (lo, hi) k 256 = ((lo, hi), k)
     | zamboni (b as B{v',...}) (lo, hi) k i =
       let val k' = v' !! i
-          val () = Print.esay ("K[" ^ (Int.toString i) ^ "]=" ^ (Int.toString k') )
           val lo' = Int.max (lo, 1 + (10 * k' div 21))
           val hi' = Int.min (hi, k')
       in if lo' > hi' then ((lo, hi), k) else
@@ -49,14 +48,13 @@ struct
           NONE => raise Fail "Fucked"
         | SOME (start, ((lo, hi), _)) =>
           let
-              val () = Print.esay ("NATOVal = " ^ (Int.toString start)); 
               val yield = yieldify (lo, hi)
           in
               RunningAttack (loadInt yield_reg yield, regs, b29 (regs, reload_reg, tr, yield_reg) start)
           end
       
-  and b29 (regs,reload_reg,tr,yield_reg) start b =(Print.esay ("B29-ing at " ^ (Int.toString start));
-      RunningAttack ((loadInt tr start) @ [R reload_reg CZero], regs, nato (regs, reload_reg, tr, yield_reg)))
+  and b29 (regs,reload_reg,tr,yield_reg) start b =
+      RunningAttack ((loadInt tr start) @ [R reload_reg CZero], regs, nato (regs, reload_reg, tr, yield_reg))
 
   fun wonton_snipe (regs,reload_reg,tr) (B {v'=v',v=v,...}) =
   case max_elem Int.compare $ sequenceLengths is_zombo_killable $ BM.elems (!v') of
@@ -68,14 +66,14 @@ struct
   fun build_attack b random old  = let
       val a = if random andalso not old then allocator else Allocator.cheap allocator
       val ((snipe,tr,reload_reg,yield_reg),zomb,reload,regs) = 
-          (*if old then Terms.zombocanic_old a else*)
+          if old then Terms.zombocanic_old a else
           Terms.zombocanic_selectable_yield a (allocHealthy a b threshold) (allocHealthy a b threshold)
 
       val shoot = R reload_reg CZero
       fun continue_snipe _ = 
           RunningAttack (Load.int tr 66 @ [shoot, L CDbl tr, shoot] 
                          @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe (regs,reload_reg,tr))
-      fun load_resnipe _ = BuildingAttack (reload, regs, (*if old then (continue_snipe) else *)(nato (regs,reload_reg,tr,yield_reg)))
+      fun load_resnipe _ = BuildingAttack (reload, regs, if old then (continue_snipe) else (nato (regs,reload_reg,tr,yield_reg)))
       fun pull_trigger _ = RunningAttack ([R snipe CZero], regs, load_resnipe)
 
       val initialize = BuildingAttack (zomb, regs, pull_trigger)
@@ -85,7 +83,6 @@ struct
 
   val frees = M.freeMany allocator
   fun logic {state, analysis} diff board = let 
-      val () = case board of (B{v',...}) => Print.esay ("Fukked: " ^ (Int.toString (v' !! 133))) 
       val (analysis', (revives, kills), (our_diffs, their_diffs)) =
           A.update analysis board
       val (dead , _) = Diff.cleared diff
