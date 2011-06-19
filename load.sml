@@ -119,10 +119,10 @@ in
         case IntMap.look' (!f) dest of %CI => [] | _ => [L CInc dest]
 
     (* generates a sequence of moves to store v into dest *)
-    fun intNoPut dest v = R dest CZero :: map (fn c => L c dest) (opsForInt v)
+    fun intFast dest v = R dest CZero :: map (fn c => L c dest) (opsForInt v)
     (* note: inc is strictly better than put *)
     fun int (a : Allocator.allocr) (dest : slotno) (v : value) : move list =
-        putIfNecessary (Allocator.board a) dest @ intNoPut dest v
+        L CInc dest :: intFast dest v
 
     (* basically the same as above, but as only one function, and returning
      * the comb that computes the value, rather than the move list, since the
@@ -163,26 +163,6 @@ in
       *     end *)
      fun shiftInt dest n = shift dest (encode n)
 
-     (* loader that takes into account state *)
-     fun load_fast (b : LTG.board, a : Allocator.allocr) dest expr =
-         let val () = checkExpr expr
-             fun left x = L x dest
-             val right = R dest
-             (* right-applies a number into dest, using temps if necessary *)
-
-             (* right-applies an expression into dest *)
-             fun shift (% c) = [right c]
-               | shift (CApp (e1, e2)) = [left CK, left CS] @ shift e1 @ shift e2
-               | shift (CVal v) = shiftInt dest v
-
-             (* loads an expression into dest, assuming dest contains I. *)
-             fun load (% c) = [right c]
-               | load (CApp (%c, e)) = load e @ [left c]  (* optimization *)
-               | load (CApp (e1, e2)) = load e1 @ shift e2
-               | load (CVal v) = intNoPut dest v
-         in putIfNecessary b dest @ load expr
-         end
-
      (* A fast, constant-space loader.
       *
       * Loads a combinator using a modified version of sully's algorithm. Allocates temporary slots
@@ -191,7 +171,7 @@ in
       *
       * TODO: should take game state and determine whether it needs to load I into dest.
       *)
-     fun load (A : Allocator.allocr) (dest : slotno) (expr : comb) : move list =
+     fun loadFast (A : Allocator.allocr) (dest : slotno) (expr : comb) : move list =
          let val () = checkExpr expr
              fun left x = L x dest
              val right = R dest
@@ -206,9 +186,11 @@ in
              fun load (% c) = [right c]
                | load (CApp (%c, e)) = load e @ [left c]  (* optimization *)
                | load (CApp (e1, e2)) = load e1 @ shift e2
-               | load (CVal v) = intNoPut dest v
-         in left CInc (* make sure dest contains I *) :: load expr
+               | load (CVal v) = intFast dest v
+         in load expr
          end
+
+     fun load A dest expr = L CInc dest (* make sure dest contains I *) :: loadFast A dest expr
 
   end
 
