@@ -177,6 +177,8 @@ in
          in load expr
          end
 
+     fun loadWithTemp temp dest expr = L CInc dest :: loadFastWithTemp temp dest expr
+
      (* A fast, constant-space loader.
       *
       * Loads a combinator using a modified version of sully's algorithm. Allocates temporary slots
