@@ -31,7 +31,7 @@ struct
         | wonton_snipe n () =
           RunningAttack ([L CSucc tr, shoot], regs, wonton_snipe (n+1))
       fun continue_snipe () = 
-          RunningAttack (Load.int tr 66 @ [shoot, R tr CDbl, shoot] 
+          RunningAttack (Load.int tr 66 @ [shoot, L CDbl tr, shoot] 
                          @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe 0)
       fun load_resnipe () = BuildingAttack (reload, regs, continue_snipe)
       fun pull_trigger  () = RunningAttack ([R snipe CZero], regs, load_resnipe)

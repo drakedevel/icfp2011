@@ -157,8 +157,8 @@ in
           val sr = Allocator.alloc a;         (*1*)
           val target_reg = Allocator.alloc a; (*2*)
           val snipe_reg = Allocator.alloc a;  (*3*)
-          val reshoot_reg = Allocator.alloc a;
-          val reshooter = Load.load a reshoot_reg (reshoot reshoot_reg (S ? %CZombie ? %CGet))
+          (*val reshoot_reg = Allocator.alloc a;*)
+          val reshooter = Load.load a snipe_reg (reshoot snipe_reg (S ? %CZombie ? %CGet))
           val snipe = Load.load a snipe_reg (ski snipe_old)
           (*ugh. this is inside out.  the EVal sr gets passed in as
            * the first argument to leftmost Copy
@@ -170,10 +170,10 @@ in
           fun rep 0 _ = []
             | rep n x = x::rep (n-1) x
       in
-          ((snipe_reg, target_reg,reshoot_reg),
+          ((snipe_reg, target_reg,snipe_reg),
            fint 0 16 @ [R 1 CGet, R 1 CZero] @ rep 9 (L CDbl 0) @
            snipe @ volc @ gun' @fint target_reg 0, reshooter,
-          [gr,sr,target_reg,snipe_reg,reshoot_reg])
+          [gr,sr,target_reg,snipe_reg])
       end 
 end
 end
