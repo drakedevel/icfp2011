@@ -91,6 +91,8 @@ struct
               else rev (x1::z) :: loop nil (x2::xs)
       in loop [] end
 
+  fun dedup (x::l) = foldl (fn (e,a) => e :: (List.filter (fn x => not (x = e)) a)) [x] l
+
   fun option z _ NONE = z
     | option _ f (SOME x) = f x
 
