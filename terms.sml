@@ -109,10 +109,6 @@ in
    *         (tr, gun' @ volc)
    *     end *)
   fun fetch n = thunk (%CGet ? EVal n)
-  fun snipe gr =
-      S  ?(S ? (S ? (%CAttack ? (%CSucc ? EVal 16)) ? (K ? EVal 8192)) ? 
-          (S ? (%CAttack ? (EVal 16)) ? (K ? EVal 8192)))?
-         (S ? %CZombie ? (fetch gr))
   (*fastload, don't bother to left-apply CPut*)
   fun fint reg x = List.tl (Load.int reg x)
   fun durka_durka self target = ski ((%CAttack ? (EVal self) ? (EVal target) ? (EVal
@@ -124,7 +120,7 @@ in
     val sac' = Allocator.alloc a
     in (Load.load a sac (durka_durka sac target)) @ (Load.load a sac'
     (durka_durka sac' target)) end
-  fun zombocanic a =
+  fun zombocanic a d1 d2 =
       let
           val (L,R) = (Evaluator.L,Evaluator.R)
           val a = Allocator.new ();
@@ -137,7 +133,12 @@ in
           val reshooter = 
               Load.load a  reshoot_reg (reshoot reshoot_reg (S ? %CDec ? (S ?
               %CZombie ? (fetch gr))))
-          val snipe = Load.load a snipe_reg (ski (snipe gr))
+          val snipe =
+              S  ?(S ? (S ? (%CAttack ? (%CSucc ? EVal d2)) ? (K ? EVal 8192)) ? 
+                     (S ? (%CAttack ? (EVal d1)) ? (K ? EVal 8192)))?
+                 (S ? %CZombie ? (fetch gr))
+
+          val snipe = Load.load a snipe_reg (ski snipe)
           (*ugh. this is inside out.  the EVal sr gets passed in as
            * the first argument to leftmost Copy
            *)

@@ -73,6 +73,7 @@ end
 
 structure Evaluator : EVALUATOR =
 struct
+  structure P = Print
   open Util infixr 0 $
 
   open LTG
@@ -131,7 +132,8 @@ struct
       val changesTheirs = ref theirs
 
       fun setVit vits hdiff idx newvit =
-          let val oldvit = IntMap.look' (!vits) idx
+          let val () = P.esay ("UP: " ^ P.is idx ^ " " ^ P.is newvit)
+              val oldvit = IntMap.look' (!vits) idx
               val _ = vits := IntMap.bind (!vits) idx newvit
               val zombified = newvit = ~1
               val _ = hdiff := IntMap.bind (!hdiff) idx
@@ -207,7 +209,7 @@ struct
           in app (reduce (e1' & e2')) (n+1) end
         | app e n = (e, n)
 
-      fun error e = Print.esay ("ERR: " ^ e ^ (if zombie then "Z" else "?"))
+      fun error e = Print.esay ("ERR: " ^ e ^ (if zombie then " Z" else " ?"))
 
       val result = SOME $ #1 $ app expr 0
           handle EvalError s => (error s; NONE)
@@ -227,13 +229,14 @@ struct
   (* To be run before a turn. Runs all of the zombies *)
   fun run_zombies (board as B{f,v,...}) =
       let val diff = ref Diff.empty
-          fun handle_zombie (i, ~1) =
-              (evalWithDiff board (CApp (f !! i, %CI)) true diff;
-               up f i $ %CI;
-               0)
-            | handle_zombie (_, n) = n
+          fun handle_zombie i =
+              if v !! i = ~1 then
+                  (evalWithDiff board (CApp (f !! i, %CI)) true diff;
+                   up f i $ %CI;
+                   up v i 0)
+              else ()
       (* note: mapi required by spec to be in-order *)
-      in (v := IntMap.mapi handle_zombie (!v); !diff) end
+      in (List.app handle_zombie (upto 256); !diff) end
 
   fun play_card (board as B{f,v,...}) (direction, card, slot_num) =
       let val slot = f !! slot_num

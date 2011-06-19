@@ -16,25 +16,54 @@ struct
   structure Diff = Evaluator.Diff
 
   datatype state = Start
-                 | BuildingAttack of move list * slotno list * (unit -> state)
-                 | RunningAttack of move list * slotno list * (unit -> state)
+                 | BuildingAttack of move list * slotno list * (board -> state)
+                 | RunningAttack of move list * slotno list * (board -> state)
   datatype data = D of {state: state, analysis: A.anal_comb}
 
   (* Let's fire off a job... *)
-  fun build_attack () = let
-      val ((snipe,tr,reload_reg),zomb,reload,regs) = Terms.zombocanic_old allocator
+  fun build_attack_old ()  = let
+      val ((snipe,tr,reload_reg),zomb,reload,regs) = 
+          Terms.zombocanic_old allocator
 
-(*      val careful_snipe = Load.int tr 66 @ [R reload_reg CZero, L CDbl tr, R reload_reg CZero]*)
       val shoot = R reload_reg CZero
-      fun wonton_snipe 0 () = 
-          RunningAttack (Load.int tr 0 @ [shoot], regs, wonton_snipe 0)
-        | wonton_snipe n () =
-          RunningAttack ([L CSucc tr, shoot], regs, wonton_snipe (n+1))
-      fun continue_snipe () = 
+      fun wonton_snipe  (B {v'=v',v=v,...}) =
+          let
+              val SOME (slot,vit) = 
+                  LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v))
+              val _ = Print.esay ("found: "^Int.toString slot ^ " with value: "^ Int.toString vit);
+
+              val SOME (slot,vit) = 
+                  LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v'))
+              val _ = Print.esay ("found: "^Int.toString slot ^ " with value: "^ Int.toString vit);
+          in
+              RunningAttack (Load.int slot 0 @ [shoot], regs, wonton_snipe)
+          end
+      fun continue_snipe _ = 
           RunningAttack (Load.int tr 66 @ [shoot, L CDbl tr, shoot] 
-                         @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe 0)
-      fun load_resnipe () = BuildingAttack (reload, regs, continue_snipe)
-      fun pull_trigger  () = RunningAttack ([R snipe CZero], regs, load_resnipe)
+                         @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe)
+      fun load_resnipe _ = BuildingAttack (reload, regs, continue_snipe)
+      fun pull_trigger _ = RunningAttack ([R snipe CZero], regs, load_resnipe)
+
+      val initialize = BuildingAttack (zomb, regs, pull_trigger)
+
+  in 
+      initialize(*BuildingAttack (attack, regs, re_snipe (66*3))*)
+  end
+
+  fun build_attack_new random = let
+      val a = if random then allocator else Allocator.cheap allocator
+      val ((snipe,tr,reload_reg),zomb,reload,regs) = 
+          (*TODO: actually allocate them*)
+          Terms.zombocanic a 8 9
+
+      val shoot = R reload_reg CZero
+      fun wonton_snipe _ = 
+          RunningAttack ([L CSucc tr, shoot], regs, wonton_snipe)
+      fun continue_snipe _ = 
+          RunningAttack (Load.int tr 66 @ [shoot, L CDbl tr, shoot] 
+                         @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe)
+      fun load_resnipe b = BuildingAttack (reload, regs, continue_snipe)
+      fun pull_trigger  b = RunningAttack ([R snipe CZero], regs, load_resnipe)
 
       val initialize = BuildingAttack (zomb, regs, pull_trigger)
 
@@ -50,20 +79,20 @@ struct
       val bring_out_yer_dead = List.filter (flip contains $ dead)
 
 
-      fun step (Start) = step $ build_attack ()
+      fun step (Start) = step $ build_attack_old ()
         (* can we repeat the attack better?
         | step (BuildingAttack ([], regs)) =
           (frees regs; step $ build_attack ())
          *)
         | step (BuildingAttack ([], _, next)) =
-          step $ next ()
+          step $ next board
         | step (BuildingAttack (x::xs, regs, next)) =
           (x, BuildingAttack (xs, regs, next))
 
         | step (RunningAttack (x::xs, regs, next)) =
           (x, RunningAttack(xs, regs, next))
         | step (RunningAttack ([], _, next)) =
-          step $ next ()
+          step $ next board
 
       val (move, state') = step state
 
