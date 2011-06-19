@@ -133,9 +133,11 @@ struct
               else 0 :: loop xs 0
       in rev (loop (rev l) 0) end
 
-  fun max_elem cmp l =
+  fun max_elem _ nil = NONE
+    | max_elem cmp l =
+      SOME (
       foldl1 (fn ((i, x), (i', x')) =>
                  if cmp (x, x') = GREATER then (i, x) else (i', x'))
-      (enumerate l)
+             (enumerate l))
   
 end
