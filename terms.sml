@@ -183,6 +183,6 @@ in
            fint 0 8 @ [R 1 CGet, R 1 CZero] @ rep 10 (L CDbl 0) @
            snipe @ volc @ gun' @fint target_reg 0, reshooter,
           [8, 9, gr,sr,target_reg,snipe_reg])
-      end 
+      end
 end
 end
