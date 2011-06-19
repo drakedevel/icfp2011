@@ -51,14 +51,17 @@ in
       (1.0/3.0)))+2.80815e6 * (Math.pow ((~2.14896e~13+2.3966e~13 * y+2.3966e~13
       * (Math.sqrt(0.804142+y * (y -1.79334)))), (1.0/3.0)))
     fun random_dist () = floor (magic (Random.randReal ass_random))
-    fun alloc (R as (Z, S, mode)) =
+    fun alloc m = allocFilter (fn (_) => true) m
+    fun allocFilter f (R as (Z, S, mode)) =
       if mode
       then let val a = random_dist () in
-        if IM.has (IM.intersectWith (fn (x, y) => x) ((!Z), (!S))) a
+        if (IM.has (IM.intersectWith (fn (x, y) => x) ((!Z), (!S))) a) andalso
+        (f a)
         then a
-        else alloc R
+        else allocFilter f R
            end
-      else case IM.firsti (IM.intersectWith (fn (x, y) => x) ((!Z), (!S))) of
+      else case IM.firsti (IM.filter f (IM.intersectWith (fn (x, y) => x) ((!Z),
+      (!S)))) of
                 NONE => raise OOM
               | SOME (x, ()) => (S := IM.delete (!S) x; x)
     fun allocMany (R as (ref Z, ref S, _)) n =
