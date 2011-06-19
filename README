@@ -1,23 +1,56 @@
-so, the algorithm is
-we define a function "shift E", that produces a series of 
-instructions such that if they are applied to a cell containing 
-F, the cell will contain F E
-then, we define:
-shift C = right C     (C is a base combinator)
-shift (e1 e2) = left K; left S; shift e1; shift e2
+A phrenologist, an astrologist, and a eugenicist form a band. What is the band called?
 
-proof by induction:
-if e is a combinator, then we apply right C, yielding F C
-if e is (e1 e2), then we apply left K, left S, yielding S (K F)
-we then do shift e1; by induction, this yields S (K F) e1
-we then do shift e2; by induction, this yields S (K F) e1 e2
-evaluating that gives (K F e2) (e1 e2) -> F (e1 e2)
+ ____            _   ____       _                     
+| __ )  __ _  __| | / ___|  ___(_) ___ _ __   ___ ___ 
+|  _ \ / _` |/ _` | \___ \ / __| |/ _ \ '_ \ / __/ _ \
+| |_) | (_| | (_| |  ___) | (__| |  __/ | | | (_|  __/
+|____/ \__,_|\__,_| |____/ \___|_|\___|_| |_|\___\___|
+ o Marty Rosenberg
+ o Michael Sullivan
+ o Michael Arntzenius
+ o Matthew Maurer
+ o Andrew Drake
+ o Ryan Pearl
+ o Jacob Potter
 
-addendum: encoding numbers is trivial.
-transforming F into F x for a value x, is harder.
+Source diving:
+    - monad.sml 
+        of *course* SML has monadic computation.
+        Please see IO.unsafePerformIO
+    - load.sml 
+        There is nothing important to say about this file.
+        Please see magic : real -> real. We are serious. 
+    - super.sml
+        A supercomlliding supercompiler.
+        Please proceed quickly to the end of the structure. 
+        Prolonged exposure to the compiler is not a part of this competition.
+    - int-map.sml
+        This file does not work. Can YOU spot why?
+    - terms.sml
+        Do not meddle in the affairs of wizards, for they are subtle and quick to anger.
+	- utlc-ski-compile.sml
+		Slaloming down the lambda hills.
+	- top.sml
+		We just derived bottom all over your repository!
+    - analysis.sml
+        The least terrifying file in this codebase.
 
-shift (CVal x) = shift (encode x)
-encode 0 = CZero
-encode x | odd x  = succ (encode (x-1))
-         | even x = dbl (encode (x div 2))
+Description of algorithms:
+The core attack algorithm is to build up a zombie attack very quickly, which
+uses zombies on the opponent side to `help' themselves to death. Michael
+Arntzenius spent three hours redesigning our loader to shave one cycle 
+from our attack sequence. Once the attack has been launched, 
+
+We have three separate implementations of board state search. Search.search 
+breadth-first searches for the shortest path from one slot state to another.
+We have an abstract expression equivalence checker (and thus minimizer). We
+also can use game tree search to look ahead to find attacks.
+
+We thought it would be important to be able to write more expressive code in
+the untyped lambda calculus, but instead, Marty Rosenberg provided us
+with custom assembly codes.
+
+None of our infrastructure is used heavily.
+
+But, we have the fastest draw in the west.
 
