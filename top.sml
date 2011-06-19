@@ -28,7 +28,18 @@ struct
   val load = Load.load
 
   fun is_zombo_killable i = i > 8192
-  fun yieldify (lo, hi) = lo
+  fun nextpow2 v n = if v < n
+                     then nextpow2 (v * 2) n
+                     else v
+  fun yieldify (lo, hi) =
+      let
+          val p = (nextpow2 1 lo)
+      in
+          if p <= hi then
+              p
+          else
+              lo
+      end
 
   fun zamboni _ (lo, hi) k 256 = ((lo, hi), k)
     | zamboni (b as B{v',...}) (lo, hi) k i =
