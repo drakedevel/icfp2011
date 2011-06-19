@@ -142,5 +142,34 @@ in
            snipe @ volc @ gun' @Load.int target_reg 0, reshooter,
            [snipe_reg, target_reg, reshoot_reg, gr, sr])
       end
+
+
+  val snipe_old = S  ?(S ? (S ? (%CAttack ? (%CSucc ? (%CGet ? EVal 1))) ? (K ? (%CGet ? EVal 0))) ? (S ? (%CAttack ? (%CGet ? (EVal 1))) ? (K ? (%CGet ? EVal 0))))?(S ? %CZombie ? %CGet)
+  (*fastload, don't bother to left-apply CPut*)
+
+  fun zombocanic_old a =
+      let
+          val (L,R) = (Evaluator.L,Evaluator.R)
+          val gr = Allocator.alloc a;
+          val sr = Allocator.alloc a;
+          val target_reg = Allocator.alloc a;
+          val snipe_reg = Allocator.alloc a;
+          val reshoot_reg = Allocator.alloc a;
+          val reshooter = Load.load a  reshoot_reg (reshoot reshoot_reg (S ? %CZombie ? %CGet))
+          val snipe = Load.load a snipe_reg (ski snipe_old)
+          (*ugh. this is inside out.  the EVal sr gets passed in as
+           * the first argument to leftmost Copy
+           *)
+          val gun_arg = (S ? (%CCopy(*sr*)) ? ((S ? (K ? %CCopy) ? (K ? EVal target_reg))))
+          val gun = ski (S ? (K ? gun_arg) ? ((K ? EVal sr)))
+          val gun' =  Load.load a gr gun
+          val volc = Load.load a sr (spin' sr (S?(S? %CHelp?I)?(K?(%CGet ? EVal 0))))
+          fun rep 0 _ = []
+            | rep n x = x::rep (n-1) x
+      in
+          ((snipe_reg, target_reg,reshoot_reg),
+           fint 0 16 @ [R 1 CGet, R 1 CZero] @ rep 9 (L CDbl 0) @
+           snipe @ volc @ gun' @fint target_reg 0, reshooter)
+      end 
 end
 end
