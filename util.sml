@@ -115,4 +115,7 @@ struct
                            loop xs (x::t)
   in loop xs [] end
 
+  fun containsBy f x l = List.exists (fn y => f (x, y)) l
+  fun contains x l = containsBy (op =) x l
+  
 end

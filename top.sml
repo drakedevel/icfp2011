@@ -127,36 +127,53 @@ struct
       in (my_diff, their_diff) end
 
 
-  (* Let's fire off a job... *)
-  val _ =
-    let
-      fun fire () = ignore (Job.schedule [R 1 CGet, R 1 CZero, R 1 CZero] Job.RForever)
-
-      (* val (tr,volcanic) = Terms.volcanic *)
-      val ((snipe,tr,reload_reg),zomb,reload) = Terms.zombocanic
-
-      fun re_snipe x () =
-          ignore (Job.schedule (Load.int tr x @ [R reload_reg CZero])
-                               (Job.ROnce (re_snipe ((x+1) mod (256)))))
-      fun careful_snipe () =
-          ignore (Job.schedule (Load.int tr 66 @ [R reload_reg CZero, L CDbl tr,
-                                                  R reload_reg CZero])
-                               (Job.ROnce (re_snipe (66*3))))
-      fun do_snipe () =
-          ignore (Job.schedule (R snipe CZero::reload)  (Job.ROnce (careful_snipe)))
-      in
-       Job.schedule (zomb) (Job.ROnce (do_snipe))
-      end
-
+  val allocator = Allocator.new ()
+  structure M = Allocator
   structure A = Analysis
 
   datatype state = Start
-  val allocator = Allocator.new ()
+                 | BuildingAttack of move list * slotno list * (unit -> state)
+                 | RunningAttack of move list * slotno list * (unit -> state)
   datatype data = D of {state: state, analysis: A.anal_comb}
 
-  fun logic {state, analysis} board = 
-      let val (analysis', revives, kills) = A.update analysis board
-      in raise Fail "" end
+(*(x+1) mod (256))*)
+  (* Let's fire off a job... *)
+  fun build_attack () = let
+      fun fire () = ignore (Job.schedule [R 1 CGet, R 1 CZero, R 1 CZero] Job.RForever)
+
+      val ((snipe,tr,reload_reg),zomb,reload,regs) = Terms.zombocanic allocator
+      val do_snipe = R snipe CZero :: reload
+      val careful_snipe = Load.int tr 66 @ [R reload_reg CZero, L CDbl tr, R reload_reg CZero]
+      fun re_snipe x () = 
+          RunningAttack (Load.int tr x @ [R reload_reg CZero], regs, re_snipe $ (x+1) mod (256))
+      val attack = zomb @ do_snipe @ careful_snipe
+  in 
+      BuildingAttack (attack, regs, re_snipe (66*3))
+  end
+
+  val frees = M.freeMany allocator
+  fun logic {state, analysis} board = let 
+      val (analysis', (revives, kills), (our_diffs, their_diffs)) =
+          A.update analysis board
+
+      fun step (Start) = step $ build_attack ()
+        (* can we repeat the attack better?
+        | step (BuildingAttack ([], regs)) =
+          (frees regs; step $ build_attack ())
+ *)
+        | step (BuildingAttack ([], _, next)) =
+          step $ next ()
+        | step (BuildingAttack (x::xs, regs, next)) =
+          (x, BuildingAttack (xs, regs, next))
+
+        | step (RunningAttack (x::xs, regs, next)) =
+          (x, RunningAttack(xs, regs, next))
+        | step (RunningAttack ([], _, next)) =
+          step $ next ()
+
+      val (move, state') = step state
+
+  in ({state=state', analysis=analysis'}, move) end
 
   local
       fun proponent state b = let
@@ -168,10 +185,9 @@ struct
       end
       and opponent state b = let
           val mv = ReaderWriter.get_move ()
-          val b' = copy_board b
       in
           run_move b mv;
-          proponent state (switch_teams b') (switch_teams b)
+          proponent state (switch_teams b)
       end
   in
       fun main (name, args) = 

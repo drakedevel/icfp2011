@@ -114,18 +114,16 @@ in
   (*fastload, don't bother to left-apply CPut*)
   fun fint reg x = List.tl (Load.int reg x)
 
-  val zombocanic =
+  fun zombocanic a =
       let
           val (L,R) = (Evaluator.L,Evaluator.R)
           val a = Allocator.new ();
-          (*steal 0, so it does not hurt when they snipe it*)
-          val _ =  Allocator.alloc a;
           val gr = 1
-          val _ = Allocator.use a gr;
-          val sr = Allocator.alloc a;
-          val target_reg = Allocator.alloc a;
-          val snipe_reg = Allocator.alloc a;
-          val reshoot_reg = Allocator.alloc a;
+          val _ = Allocator.use a gr
+          val sr = Allocator.alloc a
+          val target_reg = Allocator.alloc a
+          val snipe_reg = Allocator.alloc a
+          val reshoot_reg = Allocator.alloc a
           val reshooter = 
               Load.load a  reshoot_reg (reshoot reshoot_reg (S ? %CDec ? (S ? %CZombie ? (S ? (K ? %CGet) ? %CSucc ))))
           val snipe = Load.load a snipe_reg (ski snipe)
@@ -139,9 +137,10 @@ in
           fun rep 0 _ = []
             | rep n x = x::rep (n-1) x
       in
-          ((snipe_reg, target_reg,reshoot_reg),
+          ((snipe_reg, target_reg, reshoot_reg),
            fint 0 16 @ [R 1 CGet, R 1 CZero] @ rep 9 (L CDbl 0) @
-           snipe @ volc @ gun' @Load.int target_reg 0, reshooter)
+           snipe @ volc @ gun' @Load.int target_reg 0, reshooter,
+           [snipe_reg, target_reg, reshoot_reg, gr, sr])
       end
 end
 end

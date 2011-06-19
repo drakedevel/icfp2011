@@ -10,6 +10,7 @@ sig
   (* raises OOM /before/ allocating anything if would overflow. *)
   val allocMany : allocr -> int -> LTG.slotno list
   val free : allocr -> LTG.slotno -> unit
+  val freeMany : allocr -> LTG.slotno list -> unit
   val update : allocr -> LTG.board -> unit
   val withSlot : allocr -> (LTG.slotno -> 'a) -> 'a
   val aslr : allocr -> allocr
@@ -68,6 +69,7 @@ in
         end
 
     fun free (R as (_, S, _)) x = S := add (!S) x
+    fun freeMany R = List.app (free R)
     fun update (Z, _, _) (B{v = ref vital,...}) = Z := IntMap.map (fn (x) => ()) (IntMap.filter (fn (x) => x >
       0) vital)
     fun withSlot a f =
