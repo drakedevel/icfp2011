@@ -25,12 +25,10 @@ struct
 
   (* Let's fire off a job... *)
   fun wonton_snipe (regs,reload_reg,tr) (B {v'=v',v=v,...}) =
-      let
-          val SOME (slot,vit) = 
-              LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v'))
-          val _ = Print.esay ("found: "^Int.toString slot ^ " with value: "^ Int.toString vit);
-      in
-          RunningAttack (Load.int tr slot @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
+  case LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v')) of
+      SOME (slot,vit) =>
+      RunningAttack (Load.int tr slot @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
+    | NONE _ => RunningAttack (Load.int tr 0 @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
       end
 
   fun build_attack b random old  = let
