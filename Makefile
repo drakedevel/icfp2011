@@ -2,7 +2,7 @@ all: ltg
 .PHONY: all tests ltg mlton-ltg tar
 
 #MLTON = mlton -const "Exn.keepHistory true" -default-ann "redundantMatch warn" -default-ann "sequenceNonUnit warn" -output
-MLTON = mlton -disable-ann "nonexhaustiveMatch warn" -disable-ann "sequenceNonUnit warn" -output
+MLTON = mlton -default-ann "nonexhaustiveMatch ignore" -default-ann "sequenceNonUnit ignore" -output
 
 tests:
 	echo 'CM.make "sources.cm"' | sml
