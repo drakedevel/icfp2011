@@ -126,9 +126,6 @@ struct
       let val (my_diff, their_diff) = diff_boards old_board new_board
       in (my_diff, their_diff) end
 
-  val allocator = Allocator.new ()
-
-  fun logic info = ()
 
   (* Let's fire off a job... *)
   val _ =
@@ -151,42 +148,41 @@ struct
        Job.schedule (zomb) (Job.ROnce (do_snipe))
       end
 
-(* old version
-      let
-          open UTLCNamed
-          val (op ?) = EApp
-          fun addNoobing () = ignore (Job.schedule [ R 0 CSucc ] Job.RForever)
-          val asser = Terms.load' (Terms.repeat_lam_ctr ? Terms.zombie_helper 0 ? %CZero)
-          fun loader () = Job.schedule (asser) (Job.ROnce addNoobing)
-          fun initial_attack i = Terms.load' (%CAttack ? EVal i ? %CZero ? EVal 6000)
-      in
-          Job.schedule (initial_attack 5)
-          (Job.ROnce (fn () => ignore $ Job.schedule (initial_attack 6)
-                                      (Job.ROnce (ignore o loader))))
-      end
-*)
+  structure A = Analysis
+
+  datatype state = Start
+  val allocator = Allocator.new ()
+  datatype data = D of {state: state, analysis: A.anal_comb}
+
+  fun logic {state, analysis} board = 
+      let val (analysis', revives, kills) = A.update analysis board
+      in raise Fail "" end
 
   local
-      fun proponent b_old b = let
-          val () = logic (get_board_info b_old b)
-          val mv = Job.get_move ()
+      fun proponent state b = let
+          val (state', mv) = logic state b
       in
           ReaderWriter.put_move mv;
           run_move b mv;
-          opponent (switch_teams b)
+          opponent state' (switch_teams b)
       end
-      and opponent b = let
+      and opponent state b = let
           val mv = ReaderWriter.get_move ()
           val b' = copy_board b
       in
           run_move b mv;
-          proponent (switch_teams b') (switch_teams b)
+          proponent state (switch_teams b') (switch_teams b)
       end
   in
-      fun main (name, args) = case args of
-             ["0"] => proponent (build_board ()) (build_board ())
-           | ["1"] => opponent (build_board ())
-           | _ => raise Fail "Incorrect arguments"
+      fun main (name, args) = 
+          let val board = build_board ()
+              val state = {state = Start, analysis = A.init_state}
+          in
+              case args of
+                  ["0"] => proponent state board
+                | ["1"] => opponent state board
+                | _ => raise Fail "Incorrect arguments"
+          end
       fun main' args = main args
           handle e => (Print.esay ("Unhandled exception: " ^ exnMessage e);
                        OS.Process.failure)
