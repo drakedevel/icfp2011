@@ -191,7 +191,7 @@ struct
         | app (CApp (e1, e2)) n =
           let val (e1', n') = app e1 n
               val (e2', n'') = app e2 n'
-              val () = if n >= 1000 then raise TooManyApps else ()
+              val () = if n'' >= 1000 then raise TooManyApps else ()
           in app (reduce (e1' & e2')) (n''+1) end
         | app e n = (e, n)
 
