@@ -152,7 +152,7 @@ struct
        Job.schedule (zomb) (Job.ROnce (do_snipe))
       end
   else
-      
+(*
       let
           open UTLCNamed
           val (op ?) = EApp
@@ -166,6 +166,7 @@ struct
           (Job.ROnce (fn () => ignore $ Job.schedule (initial_attack 6) 
                                       (Job.ROnce (ignore o loader))))
       end
+*) raise Fail "this is dead code"
 
   local
       fun proponent b_old b = let
