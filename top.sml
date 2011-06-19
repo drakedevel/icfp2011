@@ -30,6 +30,18 @@ struct
 
   fun is_zombo_killable i = i > threshold
 
+  fun zamboni _ (lo, hi) k 256 = ((lo, hi), k)
+    | zamboni (b as B{v',...}) (lo, hi) i k =
+      let val k = v' !! i
+          val lo' = Int.max (lo, lo * k div 21)
+          val hi' = Int.min (hi, k)
+      in if lo' > hi' then ((lo, hi), k) else
+         zamboni b (lo', hi') (k+1) (i+1)
+      end
+  fun cmp_ranges ((_, len), (_, len')) = Int.compare (len, len')
+  fun find_largest_range b =
+      max_elem cmp_ranges $ map (zamboni b (0, max_slot) 0) $ upto num_slots
+
   (* Let's fire off a job... *)
   fun wonton_snipe (regs,reload_reg,tr) (B {v'=v',v=v,...}) =
   case max_elem Int.compare $ sequenceLengths is_zombo_killable $ BM.elems (!v') of
