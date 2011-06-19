@@ -27,13 +27,14 @@ struct
   val loadInt = Load.int allocator
   val load = Load.load allocator
 
-  fun is_zombo_killable i = i > threshold
+  fun is_zombo_killable i = i > 8192
+  fun yieldify v = 8192(*1 + ((10 * v) div 21)*)
 
   (* Let's fire off a job... *)
   fun wonton_snipe (regs,reload_reg,tr,yield_reg) (B {v'=v',v=v,...}) =
   case LTG.BoardMap.firsti (LTG.BoardMap.filter is_zombo_killable (!v')) of
       SOME (slot,vit) =>
-      RunningAttack (loadInt tr slot @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr,yield_reg))
+      RunningAttack ((if yield_reg < 0 then [] else (loadInt yield_reg (yieldify vit))) @ (loadInt tr slot) @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr,yield_reg))
     (* FIXME: we need to do something reasonable here. this is completely useless. *)
     | NONE => RunningAttack (loadInt tr 0 @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr,yield_reg))
 
