@@ -96,7 +96,7 @@ struct
   fun logic {state, analysis} diff board = let 
       val (analysis', (revives, kills), (our_diffs, their_diffs)) =
           A.update analysis board
-      val (dead , _) = Diff.cleared diff
+      val (_ , dead) = Diff.killed diff
       val bring_out_yer_dead = List.filter (flip contains $ dead)
 
       (* ignoring our attack regs doesn't really work *)
