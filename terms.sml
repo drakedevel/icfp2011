@@ -106,11 +106,11 @@ in
    *     in
    *         (tr, gun' @ volc)
    *     end *)
-
-  val snipe =
+  fun fetch n = thunk (%CGet ? EVal n)
+  fun snipe gr =
       S  ?(S ? (S ? (%CAttack ? (%CSucc ? (%CGet ? EVal 1))) ? (K ? (%CGet ? EVal 0))) ? 
           (S ? (%CAttack ? (%CGet ? (EVal 1))) ? (K ? (%CGet ? EVal 0))))?
-         (S ? %CZombie ? (S ? (K ? %CGet) ? %CSucc ))
+         (S ? %CZombie ? (fetch gr))
   (*fastload, don't bother to left-apply CPut*)
   fun fint reg x = List.tl (Load.int reg x)
 
@@ -119,16 +119,16 @@ in
           val (L,R) = (Evaluator.L,Evaluator.R)
           val a = Allocator.new ();
           (*steal 0, so it does not hurt when they snipe it*)
-          val _ =  Allocator.alloc a;
-          val gr = 1
-          val _ = Allocator.use a gr;
+          val _ = Allocator.use a 0
+          val gr = Allocator.alloc a;
           val sr = Allocator.alloc a;
           val target_reg = Allocator.alloc a;
           val snipe_reg = Allocator.alloc a;
           val reshoot_reg = Allocator.alloc a;
           val reshooter = 
-              Load.load a  reshoot_reg (reshoot reshoot_reg (S ? %CDec ? (S ? %CZombie ? (S ? (K ? %CGet) ? %CSucc ))))
-          val snipe = Load.load a snipe_reg (ski snipe)
+              Load.load a  reshoot_reg (reshoot reshoot_reg (S ? %CDec ? (S ?
+              %CZombie ? (fetch gr))))
+          val snipe = Load.load a snipe_reg (ski (snipe gr))
           (*ugh. this is inside out.  the EVal sr gets passed in as
            * the first argument to leftmost Copy
            *)
