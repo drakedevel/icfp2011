@@ -34,7 +34,7 @@ struct
   end
 
   val frees = M.freeMany allocator
-  fun logic {state, analysis} board = let 
+  fun logic {state, analysis} diff board = let 
       val (analysis', (revives, kills), (our_diffs, their_diffs)) =
           A.update analysis board
 
@@ -58,8 +58,9 @@ struct
   in ({state=state', analysis=analysis'}, move) end
 
   local
-      fun proponent state b = let
-          val (state', mv) = logic state b
+      fun proponent state b diff = let
+          val () = M.update allocator b
+          val (state', mv) = logic state diff b
       in
           ReaderWriter.put_move mv;
           run_move b mv;
@@ -67,9 +68,9 @@ struct
       end
       and opponent state b = let
           val mv = ReaderWriter.get_move ()
+          val diff = run_move b mv
       in
-          run_move b mv;
-          proponent state (switch_teams b)
+          proponent state (switch_teams b) diff
       end
   in
       fun main (name, args) = 
@@ -77,7 +78,7 @@ struct
               val state = {state = Start, analysis = A.init_state}
           in
               case args of
-                  ["0"] => proponent state board
+                  ["0"] => proponent state board Evaluator.Diff.empty
                 | ["1"] => opponent state board
                 | _ => raise Fail "Incorrect arguments"
           end
