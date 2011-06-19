@@ -154,7 +154,7 @@ in
       *
       * TODO: should take game state and determine whether it needs to load I into dest.
       *)
-     fun load (B {f, v, f', v'} : board) (A : Allocator.allocr) (dest : slotno) (expr : comb) : move list =
+     fun load (A : Allocator.allocr) (dest : slotno) (expr : comb) : move list =
          let val () = checkExpr expr
              fun left x = L x dest
              val right = R dest
@@ -170,9 +170,7 @@ in
                | load (CApp (%c, e)) = load e @ [left c]  (* optimization *)
                | load (CApp (e1, e2)) = load e1 @ shift e2
                | load (CVal v) = intNoPut dest v
-         in (* make sure dest contains I *)
-             (case BoardMap.look (!f) dest of SOME (%CI) => [] | _ => [left CInc])
-             @ load expr
+         in left CInc (* make sure dest contains I *) :: load expr
          end
 
   end

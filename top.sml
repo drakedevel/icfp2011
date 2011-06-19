@@ -135,7 +135,7 @@ struct
     let
       fun fire () = ignore (Job.schedule [R 1 CGet, R 1 CZero, R 1 CZero] Job.RForever)
 
-      val (tr,volcanic) = Terms.volcanic
+      (* val (tr,volcanic) = Terms.volcanic *)
       val ((snipe,tr,reload_reg),zomb,reload) = Terms.zombocanic
 
       fun re_snipe x () =
