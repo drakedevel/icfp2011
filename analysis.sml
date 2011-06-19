@@ -88,8 +88,9 @@ fun update (us_state, them_state, old_board) board =
         val them_state'' = foldr (update_them(heals, board)) them_state'
                                  (Util.upto(255))
     in ((us_state'', them_state'', copy_board board),
-        (IntMap.listKeys(revives), IntMap.listKeys(kills)))
-    end
+        (IntMap.listKeys(revives), IntMap.listKeys(kills)), (our_diffs,
+        their_diffs))
+        end
 end
 fun analysis_us (m, _, _) i = let val OurState(_, l) = IntMap.lookup m in l end
 fun analysis_them (_, m, _) i = let val EnemyState(_, _, _, l) = IntMap.lookup m 
