@@ -46,6 +46,7 @@ struct
   val TooBig = EvalError "too big"
   val NotDead = EvalError "not dead"
   val Dead = EvalError "slot dead"
+  val NotNum = EvalError "not a number"
 
   type move = app_dir * card * slotno
 
@@ -67,7 +68,7 @@ struct
       infix 6 ++ --
 
       fun num f (CVal n) = f n
-        | num _ _ = raise Stuck
+        | num _ _ = raise NotNum
 
       fun reduce e =
           (case e of
@@ -94,7 +95,7 @@ struct
              | %CAttack & CVal i & arse & CVal n =>
                let val () = if v !! i < n then raise TooBig else
                             up v i $ (v !! i) - n
-                   val j = num id arse
+                   val j = max_slot - num id arse
                    val () = if is_dead $ v' !! j  then () else
                             up v' j $ clamp $ v' !! j -- (n * 9 div 10)
                in %CI end
@@ -111,8 +112,8 @@ struct
              | %CRevive & e => num (fn i => (if is_dead (v !! i) then up v i 1 else (); %CI)) e
              | %CZombie & CVal i & x =>
                (if is_dead $ v' !! (max_slot-i) then () else raise NotDead;
-                up f' (num_slots - 1 - i) x;
-                up v' (num_slots - 1 - i) ~1;
+                up f' (max_slot - i) x;
+                up v' (max_slot - i) ~1;
                 %CI)
              | %CZombie & _ & _ => raise Stuck
              | e => e)
@@ -125,9 +126,11 @@ struct
           in app (reduce (e1' & e2')) (n+1) end
         | app e n = (e, n)
 
+      fun error e = Print.esay ("ERR: " ^ e ^ (if zombie then "Z" else "?"))
+
   in SOME $ #1 $ app expr 0
-     handle EvalError s => (Print.esay ("ERR: " ^ s); NONE)
-          | e => (Print.esay ("ERR: " ^ exnMessage e); NONE) end
+     handle EvalError s => (error s; NONE)
+          | e => (error (exnMessage e); NONE) end
 
   (* To be run before a turn. Runs all of the zombies *)
   fun run_zombies (board as B{f,v,...}) =

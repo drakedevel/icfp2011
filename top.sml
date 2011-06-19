@@ -129,52 +129,43 @@ struct
   val allocator = Allocator.new ()
 
   fun logic info = ()
-
+  val micro = true;
   (* Let's fire off a job... *)
-(*
-  fun fire () = ignore (Job.schedule [R 1 CGet, R 1 CZero, R 1 CZero] Job.RForever)
+  val _ =
+      if micro then 
+          let
+      fun fire () = ignore (Job.schedule [R 1 CGet, R 1 CZero, R 1 CZero] Job.RForever)
 
-  val (tr,volcanic) = Terms.volcanic
-  local 
-      val once = Job.ROnce
-  in
-  fun load n f () = ignore (Job.schedule (Load.int tr n) (once (f 1000) ))
-  and fire1 0 () =
-      ignore (Job.schedule [R 10 CGet, R 10 CZero, R 10 CZero] (once (load 109 fire2)))
-    | fire1 n () =
-      ignore (Job.schedule [R 10 CGet, R 10 CZero, R 10 CZero] (once (fire1 (n-1))))
-
-  and fire2 0 () = 
-      ignore (Job.schedule [R 10 CGet, R 10 CZero, R 10 CZero] (once (load (255-109) fire3)))
-    | fire2 n () =
-      ignore (Job.schedule [R 10 CGet, R 10 CZero, R 10 CZero] (once (fire2 (n-1))))
-
-  and fire3 0 () = 
-      ignore (Job.schedule [R 10 CGet, R 10 CZero, R 10 CZero] (once (load 0 fire1)))
-    | fire3 n () = 
-      ignore (Job.schedule [R 10 CGet, R 10 CZero, R 10 CZero] (once (fire3 (n-1))))
-  end
-  fun addNoobing () = ignore (Job.schedule [ R 0 CI ] Job.RForever)
-
-  val _  = Job.schedule (volcanic) (Job.ROnce (load 0 fire1))
-  *)                    
-  (*val _ = Job.schedule (Terms.load' Terms.repeat_kill) (Job.ROnce addNoobing)*)
-  (*val _  = Job.schedule (Terms.nyan_cat) (Job.ROnce fire)*)
-local
-  open UTLCNamed
-  val (op ?) = EApp
-
-in
-
-  fun addNoobing () = ignore (Job.schedule [ R 0 CSucc ] Job.RForever)
-  val asser = Terms.load' (Terms.repeat_lam_ctr ? Terms.zombie_helper 0 ? %CZero)
-  fun loader () = Job.schedule (asser) (Job.ROnce addNoobing)
-  fun initial_attack i = Terms.load' (%CAttack ? EVal i ? %CZero ? EVal 6000)
-  val _ = Job.schedule (initial_attack 5) 
+      val (tr,volcanic) = Terms.volcanic
+      val ((snipe,tr,reload_reg),zomb,reload) = Terms.zombocanic
+                                         
+      fun re_snipe x () = 
+          ignore (Job.schedule (Load.int tr x @ [R reload_reg CZero]) 
+                               (Job.ROnce (re_snipe ((x+1) mod (256)))))
+      fun careful_snipe () = 
+          ignore (Job.schedule (Load.int tr 66 @ [R reload_reg CZero, L CDbl tr,
+                                                  R reload_reg CZero]) 
+                               (Job.ROnce (re_snipe (66*3))))
+      fun do_snipe () = 
+          ignore (Job.schedule (R snipe CZero::reload)  (Job.ROnce (careful_snipe)))
+      in
+       Job.schedule (zomb) (Job.ROnce (do_snipe))
+      end
+  else
+      
+      let
+          open UTLCNamed
+          val (op ?) = EApp
+          fun addNoobing () = ignore (Job.schedule [ R 0 CSucc ] Job.RForever)
+          val asser = Terms.load' (Terms.repeat_lam_ctr ? Terms.zombie_helper 0 ? %CZero)
+          fun loader () = Job.schedule (asser) (Job.ROnce addNoobing)
+          fun initial_attack i = Terms.load' (%CAttack ? EVal i ? %CZero ? EVal 6000)
+                                 
+      in
+          Job.schedule (initial_attack 5) 
           (Job.ROnce (fn () => ignore $ Job.schedule (initial_attack 6) 
                                       (Job.ROnce (ignore o loader))))
-
-end
+      end
 
   local
       fun proponent b_old b = let

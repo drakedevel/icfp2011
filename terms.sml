@@ -77,8 +77,13 @@ in
   val ski = Compile.convertExpr
   fun spin n x = 
       ski (S ? (S ? (K ? %CGet) ? (K ? (EVal n))) ? (S ? x ? %CSucc))
+
+  fun spin' n x = 
+      ski (S ? (S ? (K ? %CCopy) ? (K ? (EVal n))) ? (S ? x ? %CSucc))
+
   fun reshoot n x =
       ski (S ? (K ? (S ? ( K ? %CGet ) ? (K ? (EVal n)))) ? x)
+
   fun gun n f = ski (S ? (K ? f) ? ((S ? (K ? %CGet) ? (K ? EVal n))))
 
   fun make_spin n x = 
@@ -101,8 +106,42 @@ in
       in
           (tr, gun' @ volc)
       end
+  val snipe =
+      S  ?(S ? (S ? (%CAttack ? (%CSucc ? (%CGet ? EVal 1))) ? (K ? (%CGet ? EVal 0))) ? 
+          (S ? (%CAttack ? (%CGet ? (EVal 1))) ? (K ? (%CGet ? EVal 0))))?
+         (S ? %CZombie ? (S ? (K ? %CGet) ? %CSucc ))
+  (*fastload, don't bother to left-apply CPut*)
+  fun fint reg x = List.tl (Load.int reg x)
 
-  fun load e = Load.load (Allocator.new ()) 0 e
+  val zombocanic =
+      let
+          val (L,R) = (Evaluator.L,Evaluator.R)
+          val a = Allocator.new ();
+          (*steal 0, so it does not hurt when they snipe it*)
+          val _ =  Allocator.alloc a;
+          val gr = Allocator.alloc a;
+          val sr = Allocator.alloc a;
+          val target_reg = Allocator.alloc a;
+          val snipe_reg = Allocator.alloc a;
+          val reshoot_reg = Allocator.alloc a;
+          val reshooter = 
+              Load.load a  reshoot_reg (reshoot reshoot_reg (S ? %CZombie ? (S ? (K ? %CGet) ? %CSucc )))
+          val snipe = Load.load a snipe_reg (ski snipe)
+          (*ugh. this is inside out.  the EVal sr gets passed in as
+           * the first argument to leftmost Copy
+           *)
+          val gun_arg = (S ? (%CCopy(*sr*)) ? ((S ? (K ? %CCopy) ? (K ? EVal target_reg))))
+          val gun = ski (S ? (K ? gun_arg) ? ((K ? EVal sr)))
+          val gun' =  Load.load a gr gun
+          val volc = Load.load a sr (spin' sr (S?(S? %CHelp?I)?(K?(%CGet ? EVal 0))))
+          fun rep 0 _ = []
+            | rep n x = x::rep (n-1) x
+      in
+          ((snipe_reg, target_reg,reshoot_reg),
+           fint 0 16 @ [R 1 CGet, R 1 CZero] @ rep 9 (L CDbl 0) @
+           snipe @ volc @ gun' @Load.int target_reg 0, reshooter)
+      end  fun load e = Load.load (Allocator.new ()) 0 e
+
   fun load_n e n = Load.load (Allocator.new ()) n e
   val load' = load o ski
   fun load'_n e n = load_n (ski e) n
