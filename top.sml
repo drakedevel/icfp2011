@@ -30,11 +30,11 @@ struct
           let
               val SOME (slot,vit) = 
                   LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v))
-              val _ = Print.esay ("found: "^Int.toString slot ^ "with value: "^ Int.toString vit);
+              val _ = Print.esay ("found: "^Int.toString slot ^ " with value: "^ Int.toString vit);
 
               val SOME (slot,vit) = 
                   LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v'))
-              val _ = Print.esay ("found: "^Int.toString slot ^ "with value: "^ Int.toString vit);
+              val _ = Print.esay ("found: "^Int.toString slot ^ " with value: "^ Int.toString vit);
           in
               RunningAttack (Load.int slot 0 @ [shoot], regs, wonton_snipe)
           end
