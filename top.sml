@@ -20,10 +20,15 @@ struct
                  | RunningAttack of move list * slotno list * (board -> state)
   datatype data = D of {state: state, analysis: A.anal_comb}
 
+  fun allocHealthy a (B{v,...}) n = M.allocFilter (fn i => (v !! i) > n) a
+
+
   (* Let's fire off a job... *)
-  fun build_attack_old ()  = let
+  fun build_attack b random old = let
+      val a = if random andalso not old then allocator else Allocator.cheap allocator
+
       val ((snipe,tr,reload_reg),zomb,reload,regs) = 
-          Terms.zombocanic_old allocator
+          if old then Terms.zombocanic_old a else Terms.zombocanic a 8 9
 
       val shoot = R reload_reg CZero
       fun wonton_snipe  (B {v'=v',v=v,...}) =
@@ -47,28 +52,7 @@ struct
       val initialize = BuildingAttack (zomb, regs, pull_trigger)
 
   in 
-      initialize(*BuildingAttack (attack, regs, re_snipe (66*3))*)
-  end
-
-  fun build_attack_new random = let
-      val a = if random then allocator else Allocator.cheap allocator
-      val ((snipe,tr,reload_reg),zomb,reload,regs) = 
-          (*TODO: actually allocate them*)
-          Terms.zombocanic a 8 9
-
-      val shoot = R reload_reg CZero
-      fun wonton_snipe _ = 
-          RunningAttack ([L CSucc tr, shoot], regs, wonton_snipe)
-      fun continue_snipe _ = 
-          RunningAttack (Load.int tr 66 @ [shoot, L CDbl tr, shoot] 
-                         @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe)
-      fun load_resnipe b = BuildingAttack (reload, regs, continue_snipe)
-      fun pull_trigger  b = RunningAttack ([R snipe CZero], regs, load_resnipe)
-
-      val initialize = BuildingAttack (zomb, regs, pull_trigger)
-
-  in 
-      initialize(*BuildingAttack (attack, regs, re_snipe (66*3))*)
+      initialize
   end
 
   val frees = M.freeMany allocator
@@ -79,7 +63,7 @@ struct
       val bring_out_yer_dead = List.filter (flip contains $ dead)
 
 
-      fun step (Start) = step $ build_attack_old ()
+      fun step (Start) = step $ build_attack board false true
         (* can we repeat the attack better?
         | step (BuildingAttack ([], regs)) =
           (frees regs; step $ build_attack ())

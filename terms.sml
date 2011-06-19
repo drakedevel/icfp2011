@@ -120,16 +120,16 @@ in
     val sac' = Allocator.alloc a
     in (Load.load a sac (durka_durka sac target)) @ (Load.load a sac'
     (durka_durka sac' target)) end
+
+
   fun zombocanic a d1 d2 =
       let
           val (L,R) = (Evaluator.L,Evaluator.R)
-          val a = Allocator.new ();
-          (*steal 0, so it does not hurt when they snipe it*)
-          val gr = Allocator.alloc a;
-          val sr = Allocator.alloc a;
-          val target_reg = Allocator.alloc a;
-          val snipe_reg = Allocator.alloc a;
-          val reshoot_reg = Allocator.alloc a;
+          val gr = Allocator.alloc a
+          val sr = Allocator.alloc a
+          val target_reg = Allocator.alloc a
+          val snipe_reg = Allocator.alloc a
+          val reshoot_reg = Allocator.alloc a
           val reshooter = 
               Load.load a  reshoot_reg (reshoot reshoot_reg (S ? %CDec ? (S ?
               %CZombie ? (fetch gr))))
@@ -151,7 +151,7 @@ in
       in
           ((snipe_reg, target_reg,reshoot_reg),
            snipe @ volc @ gun' @Load.int target_reg 0, reshooter,
-           [snipe_reg, target_reg, reshoot_reg, gr, sr])
+           [d1, d2, snipe_reg, target_reg, reshoot_reg, gr, sr])
       end
 
 
@@ -180,7 +180,7 @@ in
             | rep n x = x::rep (n-1) x
       in
           ((snipe_reg, target_reg,snipe_reg),
-           fint 0 16 @ [R 1 CGet, R 1 CZero] @ rep 9 (L CDbl 0) @
+           fint 0 8 @ [R 1 CGet, R 1 CZero] @ rep 10 (L CDbl 0) @
            snipe @ volc @ gun' @fint target_reg 0, reshooter,
           [gr,sr,target_reg,snipe_reg])
       end 
