@@ -143,7 +143,8 @@ in
           val gun_arg = (S ? (%CCopy(*sr*)) ? ((S ? (K ? %CCopy) ? (K ? EVal target_reg))))
           val gun = ski (S ? (K ? gun_arg) ? ((K ? EVal sr)))
           val gun' =  Load.load gr gun
-          val volc = Load.load sr (spin' sr (S ? (S ? %CHelp ? I) ? (S ? (K ? %CGet) ? (K ? EVal yield_reg))))
+          val volc = Load.load sr (spin' sr (S?(S? %CHelp?I)?(K?(EVal 8192))))
+          (*val volc = Load.load sr (spin' sr (S ? (S ? %CHelp ? I) ? (S ? (K ? %CCopy) ? (K ? EVal yield_reg))))*)
           fun rep 0 _ = []
             | rep n x = x::rep (n-1) x
       in
