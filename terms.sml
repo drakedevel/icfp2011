@@ -108,8 +108,8 @@ in
    *     end *)
   fun fetch n = thunk (%CGet ? EVal n)
   fun snipe gr =
-      S  ?(S ? (S ? (%CAttack ? (%CSucc ? (%CGet ? EVal 1))) ? (K ? (%CGet ? EVal 0))) ? 
-          (S ? (%CAttack ? (%CGet ? (EVal 1))) ? (K ? (%CGet ? EVal 0))))?
+      S  ?(S ? (S ? (%CAttack ? (%CSucc ? EVal 16)) ? (K ? EVal 8192)) ? 
+          (S ? (%CAttack ? (EVal 16)) ? (K ? EVal 8192)))?
          (S ? %CZombie ? (fetch gr))
   (*fastload, don't bother to left-apply CPut*)
   fun fint reg x = List.tl (Load.int reg x)
@@ -119,8 +119,6 @@ in
           val (L,R) = (Evaluator.L,Evaluator.R)
           val a = Allocator.new ();
           (*steal 0, so it does not hurt when they snipe it*)
-          val _ = Allocator.use a 0
-          val _ = Allocator.use a 1
           val gr = Allocator.alloc a;
           val sr = Allocator.alloc a;
           val target_reg = Allocator.alloc a;
@@ -136,12 +134,11 @@ in
           val gun_arg = (S ? (%CCopy(*sr*)) ? ((S ? (K ? %CCopy) ? (K ? EVal target_reg))))
           val gun = ski (S ? (K ? gun_arg) ? ((K ? EVal sr)))
           val gun' =  Load.load a gr gun
-          val volc = Load.load a sr (spin' sr (S?(S? %CHelp?I)?(K?(%CGet ? EVal 0))))
+          val volc = Load.load a sr (spin' sr (S?(S? %CHelp?I)?(K?(EVal 8192))))
           fun rep 0 _ = []
             | rep n x = x::rep (n-1) x
       in
-          ((snipe_reg, target_reg, reshoot_reg),
-           fint 0 16 @ [R 1 CGet, R 1 CZero] @ rep 9 (L CDbl 0) @
+          ((snipe_reg, target_reg,reshoot_reg),
            snipe @ volc @ gun' @Load.int target_reg 0, reshooter,
            [snipe_reg, target_reg, reshoot_reg, gr, sr])
       end

@@ -65,11 +65,7 @@ struct
     | show_comb (CVar v) = Variable.name v
     | show_comb (% c) = show_card c
     | show_comb (f & x) = show_comb (CApp (f,x))
-    | show_comb (CApp (f,x)) = let val xs = show_comb_arg x
-                               in show_comb f ^
-                                  (if size xs > 1 andalso String.sub (xs, 0) <> #"("
-                                   then " " ^ xs else xs)
-                               end
+    | show_comb (CApp (f,x)) = show_comb f ^ ("(" ^ (show_comb x) ^ ")")
   and show_comb_arg (f & x) = show_comb_arg (CApp (f,x))
     | show_comb_arg (e as CApp (f,x)) = "(" ^ show_comb e ^ ")"
     | show_comb_arg e = show_comb e

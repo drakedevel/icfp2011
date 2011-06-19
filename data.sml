@@ -19,12 +19,12 @@ struct
   val compare = Int.compare
 end
 
-structure IntMap2 = GoodMapFn(IntKey)
-structure IntSet = GoodSetFn(IntMap2)
+structure IntMap = GoodMapFn(IntKey)
+structure IntSet = GoodSetFn(IntMap(*2*))
 structure IntPairKey = PairOrdKey(structure K1 = IntKey structure K2 = IntKey)
 structure IntPairMap = GoodMapFn(IntPairKey)
 structure IntPairSet = GoodSetFn(IntPairMap)
 
 (* Then you can do... *)
 structure WordMap = GoodMapWordFn(WordWordable)
-structure IntMap = GoodMapWordFn(IntWordable)
+(*structure IntMap = GoodMapWordFn(IntWordable)*)

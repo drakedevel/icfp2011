@@ -185,8 +185,8 @@ struct
                let val () = if v !! i < n then raise TooBig else
                             upV i $ (v !! i) - n
                    val j = num id arse
-                   val () = if is_dead $ v' !! j then () else
-                            upV' j $ clamp $ v' !! j ++ (n * 11 div 10)
+                   val () = if is_dead $ v !! j then () else
+                            upV j $ clamp $ v !! j ++ (n * 11 div 10)
                in %CI end
              | %CHelp & _ & _ & _ => raise Stuck
              | %CCopy & e => num (sub f') e
