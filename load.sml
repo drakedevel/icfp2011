@@ -58,7 +58,7 @@ in
         end
 
     fun use a slotno =
-        (if IM.has (!a) slotno then raise AlreadyInUse else ();
+        (if not (IM.has (!a) slotno) then raise AlreadyInUse else ();
          a := IM.delete (!a) slotno)
   end
 
