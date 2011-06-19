@@ -62,6 +62,8 @@ would have interruptible smart jobs that would deal elegantly with disruption,
 either by restarting or backups. We could not find up with a workable design and
 instead handwrote a state-machine-like top-level loop.
 
-None of our infrastructure is used heavily.
+None of our infrastructure is used heavily. Most of the code in our repository
+is dead. We've wasted man-*days* of time debugging stupid mistakes, reverting
+mistaken decisions, and arguing about ideas only to abandon them.
 
 But, we have the fastest draw in the west.
