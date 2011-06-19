@@ -75,9 +75,6 @@ struct
       | peep (%CI CApp x) = x
       | peep x = x
 
-  end
-
-  local val % = L.% in
     fun bracket' x c =
         (* TODO running containsVar andalso is_pure at every level is unnecessary. *)
         if not (containsVar x c) andalso is_pure c then %L.CK @ c else
