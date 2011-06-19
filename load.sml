@@ -42,9 +42,9 @@ in
     fun add S x = IM.bind S x ()
 
     fun new () = let val all =  foldl (fn (i, S) => add S i) IM.empty $ upto
-      (max_slot+1) in (ref all, ref all, true) end
+      (max_slot+1) in (ref all, ref all, false) end
       (* WARNING, in ASLR mode, an OOM condition will cause looping *)
-    fun aslr (z, m, _) = (z, m, true)
+    fun aslr (z, m, _) = (z, m, false)
     fun cheap (z, m, _) = (z, m, false)
     fun copy (ref zs, ref xs, v) = (ref zs, ref xs, v)
     fun magic y = 166.503-0.000541462/(Math.pow ((~2.14896e~13+2.3966e~13 *
