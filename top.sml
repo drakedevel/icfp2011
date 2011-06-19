@@ -13,6 +13,7 @@ struct
   val allocator = Allocator.new ()
   structure M = Allocator
   structure A = Analysis
+  structure Diff = Evaluator.Diff
 
   datatype state = Start
                  | BuildingAttack of move list * slotno list * (unit -> state)
@@ -37,6 +38,9 @@ struct
   fun logic {state, analysis} diff board = let 
       val (analysis', (revives, kills), (our_diffs, their_diffs)) =
           A.update analysis board
+      val (dead , _) = Diff.cleared diff
+      val bring_out_yer_dead = List.filter (flip contains $ dead)
+
 
       fun step (Start) = step $ build_attack ()
         (* can we repeat the attack better?
