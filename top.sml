@@ -15,6 +15,7 @@ struct
   structure M = Allocator
   structure A = Analysis
   structure Diff = Evaluator.Diff
+  structure BM = LTG.BoardMap
 
   datatype state = Start
                  | BuildingAttack of move list * slotno list * (board -> state)
@@ -31,7 +32,7 @@ struct
 
   (* Let's fire off a job... *)
   fun wonton_snipe (regs,reload_reg,tr) (B {v'=v',v=v,...}) =
-  case LTG.BoardMap.firsti (LTG.BoardMap.filter is_zombo_killable (!v')) of
+  case max_elem Int.compare $ sequenceLengths is_zombo_killable $ BM.elems (!v') of
       SOME (slot,vit) =>
       RunningAttack (loadInt tr slot @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
     (* FIXME: we need to do something reasonable here. this is completely useless. *)
