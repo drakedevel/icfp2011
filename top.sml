@@ -21,6 +21,7 @@ struct
   datatype data = D of {state: state, analysis: A.anal_comb}
 
   fun allocHealthy a (B{v,...}) n = M.allocFilter (fn i => (v !! i) > n) a
+  val threshold = 8192
 
   (* Let's fire off a job... *)
   fun wonton_snipe (regs,reload_reg,tr) (B {v'=v',v=v,...}) =
@@ -35,7 +36,8 @@ struct
   fun build_attack b random old  = let
       val a = if random andalso not old then allocator else Allocator.cheap allocator
       val ((snipe,tr,reload_reg),zomb,reload,regs) = 
-          if old then Terms.zombocanic_old a else Terms.zombocanic a 8 9
+          if old then Terms.zombocanic_old a else
+          Terms.zombocanic a (allocHealthy a b threshold) (allocHealthy a b threshold)
 
       val shoot = R reload_reg CZero
       fun continue_snipe _ = 

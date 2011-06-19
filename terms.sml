@@ -160,12 +160,12 @@ in
 
   fun zombocanic_old a =
       let
-          val a = Allocator.cheap (a)
+          val a = Allocator.cheap a
           val (L,R) = (Evaluator.L,Evaluator.R)
-          val gr = Allocator.alloc a;         (*0*)
-          val sr = Allocator.alloc a;         (*1*)
-          val target_reg = Allocator.alloc a; (*2*)
-          val snipe_reg = Allocator.alloc a;  (*3*)
+          val gr = Allocator.alloc a         (*0*)
+          val sr = Allocator.alloc a         (*1*)
+          val target_reg = Allocator.alloc a (*2*)
+          val snipe_reg = Allocator.alloc a  (*3*)
           (*val reshoot_reg = Allocator.alloc a;*)
           val reshooter = Load.load a snipe_reg (reshoot snipe_reg (S ? %CZombie ? %CGet))
           val snipe = Load.load a snipe_reg (ski snipe_old)
