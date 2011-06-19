@@ -111,9 +111,9 @@ struct
   in
       fun takedown_main (name, args) =
       let val _ = if args = ["1"] then ignore (ReaderWriter.get_move ()) else ()
-        val moves = (Terms.take_him_down 2) @ (Terms.take_him_down 3) @
-      (Terms.take_him_down 4) @ (Terms.take_him_down
-          0) @ (Util.replicate 100000 (Evaluator.L LTG.CI 72))
+        val a = Allocator.new ()
+        val moves = (Terms.take_him_down a 2) @ (Terms.take_him_down a 3) @
+        (Terms.take_him_down a 4) @ (Util.replicate 100000 (Evaluator.L LTG.CI 72))
       in map (fn x => (ReaderWriter.put_move x; ReaderWriter.get_move ()))
       moves; raise Fail "Fuck God Dead"
       end
