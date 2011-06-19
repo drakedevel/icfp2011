@@ -44,6 +44,9 @@ struct
 
   fun minBy f x y = case Int.compare (f x, f y) of GREATER => y | _ => x
 
+  fun mapBoth f (x,y) = (f x, f y)
+  fun apBoth (f,g) (x,y) = (f x, g y)
+
   (* TODO: make this tail-recursive *)
   fun intersperse _ [] = []
     | intersperse _ [x] = [x]
@@ -87,6 +90,8 @@ struct
               if cmp (x1, x2) then loop (x1::z) (x2::xs)
               else rev (x1::z) :: loop nil (x2::xs)
       in loop [] end
+
+  fun dedup (x::l) = foldl (fn (e,a) => e :: (List.filter (fn x => not (x = e)) a)) [x] l
 
   fun option z _ NONE = z
     | option _ f (SOME x) = f x

@@ -25,7 +25,7 @@ struct
       val card = randCard ()
       val slot = randSlot ()
       val mv = move dir card slot
-      val res = run_move b mv
+      val res = run_move_old b mv
   in
       case res of
       SOME _ => (b, mv)
@@ -40,7 +40,7 @@ struct
 
       and opponent b = let
           val mv = ReaderWriter.get_move ()
-          val _ = run_move b mv
+          val _ = run_move_old b mv
       in proponent b end
   in
       fun random_main (name, args) = case args of
@@ -81,13 +81,13 @@ struct
 
       fun proponent b (mv::mvs) = let
           val _ = ReaderWriter.put_move mv
-          val _ = run_move b mv
+          val _ = run_move_old b mv
       in opponent b mvs end
         | proponent b [] = proponent b noobing
 
       and opponent b mvs = let
           val mv = ReaderWriter.get_move ()
-          val _ = run_move b mv
+          val _ = run_move_old b mv
       in proponent b mvs end
   in
       fun noob_main (name, args) = case args of

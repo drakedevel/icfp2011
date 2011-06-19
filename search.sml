@@ -39,13 +39,13 @@ struct
       fun ap b mv = let
           val b' = copy_board b
       in
-          run_move b' mv; b'
+          run_move_old b' mv; b'
       end
 
       fun ap' b mv = let
           val b' = copy_board b
       in
-          run_move b' mv
+          run_move_old b' mv
       end
 
       fun dfs (b : board) outcome mvs chain 0 = foldl (fn (y,x) => case x of
