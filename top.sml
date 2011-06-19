@@ -10,11 +10,11 @@ struct
 
   datatype state_change = SDied | SRevived | SNothing
 
-  val board = build_board ()    (* fuckit *)
-  val allocator = Allocator.new board
+  val allocator = Allocator.new ()
   structure M = Allocator
   structure A = Analysis
   structure Diff = Evaluator.Diff
+  structure BM = LTG.BoardMap
 
   datatype state = Start
                  | BuildingAttack of move list * slotno list * (board -> state)
@@ -24,15 +24,15 @@ struct
   fun allocHealthy a (B{v,...}) n = M.allocFilter (fn i => (v !! i) > n) a
   val threshold = 8192
 
-  val loadInt = Load.int allocator
-  val load = Load.load allocator
+  val loadInt = Load.int
+  val load = Load.load
 
   fun is_zombo_killable i = i > 8192
   fun yieldify v = 8192(*1 + ((10 * v) div 21)*)
 
   (* Let's fire off a job... *)
   fun wonton_snipe (regs,reload_reg,tr,yield_reg) (B {v'=v',v=v,...}) =
-  case LTG.BoardMap.firsti (LTG.BoardMap.filter is_zombo_killable (!v')) of
+  case max_elem Int.compare $ sequenceLengths is_zombo_killable $ BM.elems (!v') of
       SOME (slot,vit) =>
       RunningAttack ((if yield_reg < 0 then [] else (loadInt yield_reg (yieldify vit))) @ (loadInt tr slot) @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr,yield_reg))
     (* FIXME: we need to do something reasonable here. this is completely useless. *)
@@ -46,8 +46,8 @@ struct
 
       val shoot = R reload_reg CZero
       fun continue_snipe _ = 
-          RunningAttack (loadInt tr 66 @ [shoot, L CDbl tr, shoot]
-                         @ loadInt tr (66*3) @ [shoot], regs, wonton_snipe (regs,reload_reg,tr,yield_reg))
+          RunningAttack (Load.int tr 66 @ [shoot, L CDbl tr, shoot] 
+                         @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe (regs,reload_reg,tr,yield_reg))
       fun load_resnipe _ = BuildingAttack (reload, regs, if old then (continue_snipe) else (wonton_snipe (regs,reload_reg,tr,yield_reg)))
       fun pull_trigger _ = RunningAttack ([R snipe CZero], regs, load_resnipe)
 
@@ -109,7 +109,7 @@ struct
          raise Fail "Fuck God Dead"
       end
       fun main (name, args) = 
-          let (* val board = build_board () *)
+          let val board = build_board ()
               val state = {state = Start, analysis = A.init_state}
           in
               case args of
