@@ -129,30 +129,29 @@ struct
   val allocator = Allocator.new ()
 
   fun logic info = ()
-  val micro = true;
+
   (* Let's fire off a job... *)
   val _ =
-      if micro then 
-          let
+    let
       fun fire () = ignore (Job.schedule [R 1 CGet, R 1 CZero, R 1 CZero] Job.RForever)
 
       val (tr,volcanic) = Terms.volcanic
       val ((snipe,tr,reload_reg),zomb,reload) = Terms.zombocanic
-                                         
-      fun re_snipe x () = 
-          ignore (Job.schedule (Load.int tr x @ [R reload_reg CZero]) 
+
+      fun re_snipe x () =
+          ignore (Job.schedule (Load.int tr x @ [R reload_reg CZero])
                                (Job.ROnce (re_snipe ((x+1) mod (256)))))
-      fun careful_snipe () = 
+      fun careful_snipe () =
           ignore (Job.schedule (Load.int tr 66 @ [R reload_reg CZero, L CDbl tr,
-                                                  R reload_reg CZero]) 
+                                                  R reload_reg CZero])
                                (Job.ROnce (re_snipe (66*3))))
-      fun do_snipe () = 
+      fun do_snipe () =
           ignore (Job.schedule (R snipe CZero::reload)  (Job.ROnce (careful_snipe)))
       in
        Job.schedule (zomb) (Job.ROnce (do_snipe))
       end
-  else
-(*
+
+(* old version
       let
           open UTLCNamed
           val (op ?) = EApp
@@ -160,13 +159,12 @@ struct
           val asser = Terms.load' (Terms.repeat_lam_ctr ? Terms.zombie_helper 0 ? %CZero)
           fun loader () = Job.schedule (asser) (Job.ROnce addNoobing)
           fun initial_attack i = Terms.load' (%CAttack ? EVal i ? %CZero ? EVal 6000)
-                                 
       in
-          Job.schedule (initial_attack 5) 
-          (Job.ROnce (fn () => ignore $ Job.schedule (initial_attack 6) 
+          Job.schedule (initial_attack 5)
+          (Job.ROnce (fn () => ignore $ Job.schedule (initial_attack 6)
                                       (Job.ROnce (ignore o loader))))
       end
-*) raise Fail "this is dead code"
+*)
 
   local
       fun proponent b_old b = let
