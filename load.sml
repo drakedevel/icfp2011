@@ -83,7 +83,8 @@ in
 
     (* generates a sequence of moves to store v into dest *)
     fun intNoPut dest v = R dest CZero :: map (fn c => L c dest) (opsForInt v)
-    fun int (dest : slotno) (v : value) : move list = L CPut dest :: intNoPut dest v
+    (* note: inc is strictly better than put *)
+    fun int (dest : slotno) (v : value) : move list = L CInc dest :: intNoPut dest v
 
     (* basically the same as above, but as only one function, and returning
      * the comb that computes the value, rather than the move list, since the
@@ -153,7 +154,7 @@ in
                | load (CApp (%c, e)) = load e @ [left c]  (* optimization *)
                | load (CApp (e1, e2)) = load e1 @ shift e2
                | load (CVal v) = intNoPut dest v
-         in left CPut (* load I into dest *) :: load expr
+         in left CInc (* load I into dest *) :: load expr
          end
 
   end
