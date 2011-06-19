@@ -22,35 +22,29 @@ struct
 
   fun allocHealthy a (B{v,...}) n = M.allocFilter (fn i => (v !! i) > n) a
 
-
   (* Let's fire off a job... *)
-  fun build_attack b random old = let
-      val a = if random andalso not old then allocator else Allocator.cheap allocator
+  fun wonton_snipe (regs,reload_reg,tr) (B {v'=v',v=v,...}) =
+      let
+          val SOME (slot,vit) = 
+              LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v'))
+          val _ = Print.esay ("found: "^Int.toString slot ^ " with value: "^ Int.toString vit);
+      in
+          RunningAttack (Load.int tr slot @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
+      end
 
+  fun build_attack b random old  = let
+      val a = if random andalso not old then allocator else Allocator.cheap allocator
       val ((snipe,tr,reload_reg),zomb,reload,regs) = 
           if old then Terms.zombocanic_old a else Terms.zombocanic a 8 9
 
       val shoot = R reload_reg CZero
-      fun wonton_snipe  (B {v'=v',v=v,...}) =
-          let
-              val SOME (slot,vit) = 
-                  LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v))
-              val _ = Print.esay ("found: "^Int.toString slot ^ " with value: "^ Int.toString vit);
-
-              val SOME (slot,vit) = 
-                  LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v'))
-              val _ = Print.esay ("found: "^Int.toString slot ^ " with value: "^ Int.toString vit);
-          in
-              RunningAttack (Load.int slot 0 @ [shoot], regs, wonton_snipe)
-          end
       fun continue_snipe _ = 
           RunningAttack (Load.int tr 66 @ [shoot, L CDbl tr, shoot] 
-                         @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe)
+                         @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe (regs,reload_reg,tr))
       fun load_resnipe _ = BuildingAttack (reload, regs, continue_snipe)
       fun pull_trigger _ = RunningAttack ([R snipe CZero], regs, load_resnipe)
 
       val initialize = BuildingAttack (zomb, regs, pull_trigger)
-
   in 
       initialize
   end
@@ -64,10 +58,6 @@ struct
 
 
       fun step (Start) = step $ build_attack board false true
-        (* can we repeat the attack better?
-        | step (BuildingAttack ([], regs)) =
-          (frees regs; step $ build_attack ())
-         *)
         | step (BuildingAttack ([], _, next)) =
           step $ next board
         | step (BuildingAttack (x::xs, regs, next)) =
@@ -81,7 +71,7 @@ struct
       val (move, state') = step state
 
   in ({state=state', analysis=analysis'}, move) end
-
+                                               
   local
       fun proponent state b diff = let
           val () = M.update allocator b
