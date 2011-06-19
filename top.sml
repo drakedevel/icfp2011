@@ -10,7 +10,8 @@ struct
 
   datatype state_change = SDied | SRevived | SNothing
 
-  val allocator = Allocator.new ()
+  val board = build_board ()    (* fuckit *)
+  val allocator = Allocator.new board
   structure M = Allocator
   structure A = Analysis
   structure Diff = Evaluator.Diff
@@ -23,15 +24,18 @@ struct
   fun allocHealthy a (B{v,...}) n = M.allocFilter (fn i => (v !! i) > n) a
   val threshold = 8192
 
+  val loadInt = Load.int allocator
+  val load = Load.load allocator
+
   fun is_zombo_killable i = i > threshold
 
   (* Let's fire off a job... *)
   fun wonton_snipe (regs,reload_reg,tr) (B {v'=v',v=v,...}) =
   case LTG.BoardMap.firsti (LTG.BoardMap.filter is_zombo_killable (!v')) of
       SOME (slot,vit) =>
-      RunningAttack (Load.int tr slot @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
+      RunningAttack (loadInt tr slot @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
     (* FIXME: we need to do something reasonable here. this is completely useless. *)
-    | NONE => RunningAttack (Load.int tr 0 @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
+    | NONE => RunningAttack (loadInt tr 0 @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
 
   fun build_attack b random old  = let
       val a = if random andalso not old then allocator else Allocator.cheap allocator
@@ -41,8 +45,8 @@ struct
 
       val shoot = R reload_reg CZero
       fun continue_snipe _ = 
-          RunningAttack (Load.int tr 66 @ [shoot, L CDbl tr, shoot] 
-                         @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe (regs,reload_reg,tr))
+          RunningAttack (loadInt tr 66 @ [shoot, L CDbl tr, shoot]
+                         @ loadInt tr (66*3) @ [shoot], regs, wonton_snipe (regs,reload_reg,tr))
       fun load_resnipe _ = BuildingAttack (reload, regs, continue_snipe)
       fun pull_trigger _ = RunningAttack ([R snipe CZero], regs, load_resnipe)
 
@@ -97,14 +101,14 @@ struct
   in
       fun takedown_main (name, args) =
       let val _ = if args = ["1"] then ignore (ReaderWriter.get_move ()) else ()
-        val a = Allocator.new ()
+        val a = allocator
         val moves = (Terms.take_him_down a 2) @ (Terms.take_him_down a 3) @
-        (Terms.take_him_down a 4) @ (Util.replicate 100000 (Evaluator.L LTG.CI 72))
-      in map (fn x => (ReaderWriter.put_move x; ReaderWriter.get_move ()))
-      moves; raise Fail "Fuck God Dead"
+                    (Terms.take_him_down a 4) @ (Util.replicate 100000 (Evaluator.L LTG.CI 72))
+      in map (fn x => (ReaderWriter.put_move x; ReaderWriter.get_move ())) moves;
+         raise Fail "Fuck God Dead"
       end
       fun main (name, args) = 
-          let val board = build_board ()
+          let (* val board = build_board () *)
               val state = {state = Start, analysis = A.init_state}
           in
               case args of
