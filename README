@@ -5,27 +5,30 @@ A phrenologist, an astrologist, and a eugenicist form a band. What is the band c
 |  _ \ / _` |/ _` | \___ \ / __| |/ _ \ '_ \ / __/ _ \
 | |_) | (_| | (_| |  ___) | (__| |  __/ | | | (_|  __/
 |____/ \__,_|\__,_| |____/ \___|_|\___|_| |_|\___\___|
+
  o Marty Rosenberg    (mjrosenb)
  o Michael Sullivan   (sully)
+ o Andrew Drake       (adrake)
  o Michael Arntzenius (rntz)
  o Matthew Maurer     (maurer_)
- o Andrew Drake       (adrake)
  o Ryan Pearl         (rpearl)
  o Jacob Potter       (j4cbo)
 
+
 Source diving (rebreather not included):
     - monad.sml 
-        of *course* SML has monadic computation.
-        Please see IO.unsafePerformIO
-    - load.sml 
-        There is nothing important to say about this file.
-        Please see magic : real -> real. We are serious. 
+        of *course* ML has monads!
+        see http://existentialtype.wordpress.com/2011/05/01/of-course-ml-has-monads/
+        in particular see IO.unsafePerformIO
+    - load.sml
+        See magic : real -> real.
+        We produce invalid moves if this is changed.
     - super.sml
         A supercolliding supercompiler.
-        Please proceed quickly to the end of the structure. 
+        Please proceed quickly to the end of the structure.
         Prolonged exposure to the compiler is not a part of this competition.
     - int-map.sml
-        This file does not work. Can YOU spot why?
+        This file does not work. Can YOU spot why? (We couldn't, so we used splay trees.)
     - terms.sml
         Do not meddle in the affairs of wizards, for they are subtle and quick to anger.
     - utlc-ski-compile.sml
@@ -34,23 +37,34 @@ Source diving (rebreather not included):
         We just derived bottom all over your repository!
     - analysis.sml
         The least terrifying file in this codebase.
+    - union_find.sml
+        Because every project should have an algorithm that runs in inverse-ackermann.
+        (Except ours doesn't. And we don't use it.)
 
-Description of algorithms:
+Description of our algorithms:
+
 The core attack algorithm is to build up a zombie attack very quickly, which
-uses zombies on the opponent side to `help' themselves to death. Michael
-Arntzenius spent three hours redesigning our loader to shave one cycle 
-from our attack sequence. Once the attack has been launched, 
+uses zombies on the opponent side to `help' their cells to death. Michael
+Arntzenius spent three hours redesigning our loader to shave one cycle from our
+attack sequence.
 
 We have three separate implementations of board state search. Search.search 
 breadth-first searches for the shortest path from one slot state to another.
 We have an abstract expression equivalence checker (and thus minimizer). We
 also can use game tree search to look ahead to find attacks.
 
-We thought it would be important to be able to write more expressive code in
-the untyped lambda calculus, but instead, Marty Rosenberg provided us
-with custom assembly codes.
+We thought it important to be able to write more expressive code, so we built a
+compiler from the untyped lambda calculus to SKI, with optimizations. This
+turned out to be unnecessary, since Marty Rosenberg is an SKI whizz-kid and
+provided us with "custom assembly codes".
 
-None of our infrastructure is used heavily.
+We spent two days working on and off on a design for the toplevel loop which
+would have interruptible smart jobs that would deal elegantly with disruption,
+either by restarting or backups. We could not find up with a workable design and
+instead handwrote a state-machine-like top-level loop.
+
+None of our infrastructure is used heavily. Most of the code in our repository
+is dead. We've wasted man-*days* of time debugging stupid mistakes, reverting
+mistaken decisions, and arguing about ideas only to abandon them.
 
 But, we have the fastest draw in the west.
-
