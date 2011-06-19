@@ -55,20 +55,6 @@ sig
    * runs the move, then runs zombies for the opponent.
    *)
   val run_move : LTG.board -> move -> Diff.t
-
-  (* run_move_old LTG.board move ==> result
-   *
-   * Returns (SOME result) or NONE on error.
-   *
-   * XXX DO NOT USE, does not allow you to react to zombies
-   *)
-  val run_move_old : LTG.board -> move -> LTG.comb option
-
-  (* run_moves LTG.board moves ==> ()
-   *
-   * XXX don't use, assumes opponent does nothing
-   *)
-  (* val run_moves_assuming_dumb_opponent : LTG.board -> move list -> unit *)
 end
 
 structure Evaluator : EVALUATOR =
@@ -252,12 +238,5 @@ struct
       let val diff = second $ play_card board move
       in Diff.combine diff (Diff.flip $ run_zombies $ switch_teams board)
       end
-
-  fun run_move_old board move =
-      (Print.esay "WARN: run_move_old invoked; DEPRECATED"; (* see sig *)
-       run_zombies board;
-       first $ play_card board move)
-
-  (* fun run_moves board moves = List.app (ignore o run_move_old board) moves *)
 
 end

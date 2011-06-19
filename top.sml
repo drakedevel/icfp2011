@@ -109,6 +109,14 @@ struct
           proponent state (switch_teams b) diff
       end
   in
+      fun takedown_main (name, args) =
+      let val _ = if args = ["1"] then ignore (ReaderWriter.get_move ()) else ()
+        val moves = (Terms.take_him_down 2) @ (Terms.take_him_down 3) @
+      (Terms.take_him_down 4) @ (Terms.take_him_down
+          0) @ (Util.replicate 100000 (Evaluator.L LTG.CI 72))
+      in map (fn x => (ReaderWriter.put_move x; ReaderWriter.get_move ()))
+      moves; raise Fail "Fuck God Dead"
+      end
       fun main (name, args) = 
           let val board = build_board ()
               val state = {state = Start, analysis = A.init_state}

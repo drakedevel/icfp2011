@@ -36,6 +36,7 @@ struct
       (*val amvs = moves 0 0 0 1 []*)
       val amvs = move <$> [LeftApp,RightApp] <*> [CGet, CPut, CZero, CSucc, CDbl] <*> [0,1]
 
+      (* XXX: no longer compiles, run_move_old eliminated *)
       fun ap b mv = let
           val b' = copy_board b
       in
