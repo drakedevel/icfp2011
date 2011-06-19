@@ -110,10 +110,9 @@ in
    *     end *)
   fun fetch n = thunk (%CGet ? EVal n)
   (*fastload, don't bother to left-apply CPut*)
-  fun durka_durka self target = ski ((%CAttack ? (EVal self) ? (EVal target) ? (EVal
-    9999)))
+  fun stupid_durka a durka = Load.load a durka (ski (%CAttack ? (EVal durka) ? (EVal 0) ? (EVal 10000)))
+  fun durka_durka self target = ski ((%CAttack ? (EVal self) ? (EVal target) ? (EVal 9999)))
   fun take_him_down a target = let
-    val _ = Allocator.use a 0
     val sac = Allocator.alloc a
     val sac' = Allocator.alloc a
     in (Load.load a sac (durka_durka sac target)) @ (Load.load a sac'

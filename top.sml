@@ -27,12 +27,14 @@ struct
   val loadInt = Load.int allocator
   val load = Load.load allocator
 
+  fun is_zombo_killable i = i > threshold
+
   (* Let's fire off a job... *)
   fun wonton_snipe (regs,reload_reg,tr) (B {v'=v',v=v,...}) =
-  case LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v')) of
+  case LTG.BoardMap.firsti (LTG.BoardMap.filter is_zombo_killable (!v')) of
       SOME (slot,vit) =>
-      (* XXX hardcoded allocator *)
       RunningAttack (loadInt tr slot @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
+    (* FIXME: we need to do something reasonable here. this is completely useless. *)
     | NONE => RunningAttack (loadInt tr 0 @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
 
   fun build_attack b random old  = let
@@ -60,14 +62,19 @@ struct
       val (dead , _) = Diff.cleared diff
       val bring_out_yer_dead = List.filter (flip contains $ dead)
 
+      (* ignoring our attack regs doesn't really work *)
+      fun check_attack_regs regs = not $ null $ bring_out_yer_dead $ List.drop (regs, 2)
+      fun restart_attack regs = (frees regs; step $ build_attack board true false)
 
-      fun step (Start) = step $ build_attack board false true
+      and step (Start) = step $ build_attack board false true
         | step (BuildingAttack ([], _, next)) =
           step $ next board
         | step (BuildingAttack (x::xs, regs, next)) =
+          if check_attack_regs regs then restart_attack regs else
           (x, BuildingAttack (xs, regs, next))
 
         | step (RunningAttack (x::xs, regs, next)) =
+          if check_attack_regs regs then restart_attack regs else
           (x, RunningAttack(xs, regs, next))
         | step (RunningAttack ([], _, next)) =
           step $ next board
@@ -94,11 +101,11 @@ struct
   in
       fun takedown_main (name, args) =
       let val _ = if args = ["1"] then ignore (ReaderWriter.get_move ()) else ()
-        val moves = (Terms.take_him_down allocator 2) @ (Terms.take_him_down allocator 3) @
-      (Terms.take_him_down allocator 4) @ (Terms.take_him_down allocator
-          0) @ (Util.replicate 100000 (Evaluator.L LTG.CI 72))
-      in map (fn x => (ReaderWriter.put_move x; ReaderWriter.get_move ()))
-      moves; raise Fail "Fuck God Dead"
+        val a = allocator
+        val moves = (Terms.take_him_down a 2) @ (Terms.take_him_down a 3) @
+                    (Terms.take_him_down a 4) @ (Util.replicate 100000 (Evaluator.L LTG.CI 72))
+      in map (fn x => (ReaderWriter.put_move x; ReaderWriter.get_move ())) moves;
+         raise Fail "Fuck God Dead"
       end
       fun main (name, args) = 
           let (* val board = build_board () *)
