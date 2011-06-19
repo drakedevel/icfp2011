@@ -24,23 +24,23 @@ struct
   val threshold = 8192
 
   (* Let's fire off a job... *)
-  fun wonton_snipe (regs,reload_reg,tr) (B {v'=v',v=v,...}) =
+  fun wonton_snipe (regs,reload_reg,tr,yield_reg) (B {v'=v',v=v,...}) =
   case LTG.BoardMap.firsti (LTG.BoardMap.filter (fn x => x > 0) (!v')) of
       SOME (slot,vit) =>
-      RunningAttack (Load.int tr slot @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
-    | NONE => RunningAttack (Load.int tr 0 @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr))
+      RunningAttack (Load.int tr slot @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr,yield_reg))
+    | NONE => RunningAttack (Load.int tr 0 @ [R reload_reg CZero], regs, wonton_snipe (regs,reload_reg,tr,yield_reg))
 
   fun build_attack b random old  = let
       val a = if random andalso not old then allocator else Allocator.cheap allocator
-      val ((snipe,tr,reload_reg),zomb,reload,regs) = 
+      val ((snipe,tr,reload_reg,yield_reg),zomb,reload,regs) = 
           if old then Terms.zombocanic_old a else
-          Terms.zombocanic a (allocHealthy a b threshold) (allocHealthy a b threshold)
+          Terms.zombocanic_selectable_yield a (allocHealthy a b threshold) (allocHealthy a b threshold)
 
       val shoot = R reload_reg CZero
       fun continue_snipe _ = 
           RunningAttack (Load.int tr 66 @ [shoot, L CDbl tr, shoot] 
-                         @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe (regs,reload_reg,tr))
-      fun load_resnipe _ = BuildingAttack (reload, regs, continue_snipe)
+                         @ Load.int tr (66*3) @ [shoot], regs, wonton_snipe (regs,reload_reg,tr,yield_reg))
+      fun load_resnipe _ = BuildingAttack (reload, regs, if old then (continue_snipe) else (wonton_snipe (regs,reload_reg,tr,yield_reg)))
       fun pull_trigger _ = RunningAttack ([R snipe CZero], regs, load_resnipe)
 
       val initialize = BuildingAttack (zomb, regs, pull_trigger)
