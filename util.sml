@@ -44,6 +44,9 @@ struct
 
   fun minBy f x y = case Int.compare (f x, f y) of GREATER => y | _ => x
 
+  fun mapBoth f (x,y) = (f x, f y)
+  fun apBoth (f,g) (x,y) = (f x, g y)
+
   (* TODO: make this tail-recursive *)
   fun intersperse _ [] = []
     | intersperse _ [x] = [x]
@@ -117,4 +120,7 @@ struct
                            loop xs (x::t)
   in loop xs [] end
 
+  fun containsBy f x l = List.exists (fn y => f (x, y)) l
+  fun contains x l = containsBy (op =) x l
+  
 end

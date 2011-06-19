@@ -1,6 +1,7 @@
 structure Analysis =
 struct
 open LTG
+
 datatype expr_size = SizeDepth of int | XBOX
 datatype analyzed_enemy_state = Unknown | Dull | Asset
 datatype analyzed_our_state = Untouched | Targeted | Normal
@@ -9,6 +10,9 @@ datatype tracked = EnemyState of (real * real * expr_size *
                                   analyzed_enemy_state)
                  (* hitscore, health, thing to report if queried *)
                  | OurState of (real * analyzed_our_state)
+
+type anal_comb = tracked IntMap.map * tracked IntMap.map * LTG.board
+
 local fun inserter x = fn (i, m) => IntMap.insert(m, i, x)
     fun init_all x = foldl (inserter x) IntMap.empty (Util.upto(255))
 in

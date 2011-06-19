@@ -114,7 +114,7 @@ in
   (*fastload, don't bother to left-apply CPut*)
   fun fint reg x = List.tl (Load.int reg x)
 
-  val zombocanic =
+  fun zombocanic a =
       let
           val (L,R) = (Evaluator.L,Evaluator.R)
           val a = Allocator.new ();
@@ -139,7 +139,8 @@ in
             | rep n x = x::rep (n-1) x
       in
           ((snipe_reg, target_reg,reshoot_reg),
-           snipe @ volc @ gun' @Load.int target_reg 0, reshooter)
+           snipe @ volc @ gun' @Load.int target_reg 0, reshooter,
+           [snipe_reg, target_reg, reshoot_reg, gr, sr])
       end
 end
 end
