@@ -1,6 +1,7 @@
 signature ALLOCATOR =         (* imperative *)
 sig
   exception OOM
+  exception AlreadyInUse
   type allocr                   (* allocator *)
   val new : unit -> allocr
   val copy : allocr -> allocr
@@ -29,6 +30,7 @@ in
     structure IM = IntMap (* sets don't have firsti; argh. *)
 
     exception OOM
+    exception AlreadyInUse
     type allocr = unit IM.map ref (* free list *)
 
     fun add S x = IM.bind S x ()
@@ -55,7 +57,9 @@ in
         in after f (free a) s
         end
 
-    fun use a x = a := IM.delete (!a) x
+    fun use a slotno =
+        (if IM.has (!a) slotno then raise AlreadyInUse else ();
+         a := IM.delete (!a) slotno)
   end
 
   (* these are dumb loader functions.
