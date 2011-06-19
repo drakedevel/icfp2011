@@ -50,11 +50,11 @@ sig
    *)
   val play_card : LTG.board -> move -> LTG.comb option * Diff.t
 
-  (* run_move_and_swap board move ==> (result, diff)
+  (* run_move board move ==> (result, diff)
    *
-   * runs the move, then swaps and runs zombies.
+   * runs the move, then runs zombies for the opponent.
    *)
-  (* val run_move_and_swap : LTG.board -> move -> LTG.comb option * diff *)
+  val run_move : LTG.board -> move -> Diff.t
 
   (* run_move_old LTG.board move ==> result
    *
@@ -244,6 +244,11 @@ struct
                                       | RightApp => CApp (slot, %% card)) false)
           val () = up f slot_num $ getOpt (result, %CI)
       in (result, diff) end
+
+  fun run_move board move =
+      let val diff = second $ play_card board move
+      in Diff.combine diff (Diff.flip $ run_zombies $ switch_teams board)
+      end
 
   fun run_move_old board move =
       (Print.esay "WARN: run_move_old invoked; DEPRECATED"; (* see sig *)
